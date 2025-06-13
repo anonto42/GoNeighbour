@@ -3,11 +3,13 @@ import jwt, { JwtPayload, Secret, SignOptions } from 'jsonwebtoken';
 const createToken = (
   payload: string | object | Buffer,
   secret: Secret,
-  expireTime: number
+  expireTime: any
 ): string => {
 
+  console.log(expireTime)
   const options: SignOptions = {
     expiresIn: expireTime,
+    algorithm: "HS512"
   };
 
   return jwt.sign(payload, secret, options);
