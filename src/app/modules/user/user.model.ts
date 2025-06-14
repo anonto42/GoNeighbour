@@ -12,11 +12,17 @@ const userSchema = new Schema<IUser, UserModal>(
       type: String,
       required: true,
     },
+    user_name:{
+      type: String
+    },
     role: {
       type: String,
       enum: Object.values(USER_ROLES),
       default: USER_ROLES.USER,
       required: true,
+    },
+    contact:{
+      type: String
     },
     email: {
       type: String,
@@ -29,6 +35,9 @@ const userSchema = new Schema<IUser, UserModal>(
       required: true,
       select: 0,
       minlength: 8,
+    },
+    location:{
+      type: String,
     },
     image: {
       type: String,

@@ -12,7 +12,7 @@ import { register } from '../../../types/user';
 
 const createUserToDB = async (payload: Partial<register>): Promise<any> => {
   await User.isExistUserByEmail(payload.email!);
-  
+
   const user = {
     name: payload.first_name + " " + payload.last_name,
     email: payload.email,
@@ -67,23 +67,30 @@ const getUserProfileFromDB = async (
 const updateProfileToDB = async (
   user: JwtPayload,
   payload: Partial<IUser>
-): Promise<Partial<IUser | null>> => {
-  const { id } = user;
-  const isExistUser = await User.isExistUserById(id);
-  if (!isExistUser) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
-  }
-
-  //unlink file here
-  if (payload.image) {
-    unlinkFile(isExistUser.image);
-  }
-
-  const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {
-    new: true,
-  });
-
-  return updateDoc;
+) => {
+  try {
+    const { id } = user;
+    const isExistUser = await User.isValidUser(id);
+  
+    //unlink file here
+    if (payload.image) {
+      unlinkFile(isExistUser.image);
+    };
+  
+    const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {
+      new: true,
+    }).select("-password -verified -authentication").lean().exec();
+  
+    unlinkFile(payload.image!)
+    return updateDoc;
+    
+  } catch (error: any) {
+    unlinkFile(payload.image as string)
+    throw new ApiError(
+      error.status,
+      error.message
+    )
+  };
 };
 
 export const UserService = {
