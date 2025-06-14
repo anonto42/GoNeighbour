@@ -8,14 +8,22 @@ import unlinkFile from '../../../shared/unlinkFile';
 import generateOTP from '../../../util/generateOTP';
 import { IUser } from './user.interface';
 import { User } from './user.model';
+import { register } from '../../../types/user';
 
-const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
-  //set role
-  payload.role = USER_ROLES.USER;
-  const createUser = await User.create(payload);
+const createUserToDB = async (payload: Partial<register>): Promise<any> => {
+  await User.isExistUserByEmail(payload.email!);
+  
+  const user = {
+    name: payload.first_name + " " + payload.last_name,
+    email: payload.email,
+    password: payload.password,
+    role: USER_ROLES.USER
+  }
+
+  const createUser = await User.create(user);
   if (!createUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create user');
-  }
+  };
 
   //send email
   const otp = generateOTP();
@@ -30,24 +38,28 @@ const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
   //save to DB
   const authentication = {
     oneTimeCode: otp,
-    expireAt: new Date(Date.now() + 3 * 60000),
+    expireAt: new Date(Date.now() + 5 * 60000),
   };
   await User.findOneAndUpdate(
     { _id: createUser._id },
     { $set: { authentication } }
   );
 
-  return createUser;
+  return {
+    name: createUser.name,
+    email: createUser.email,
+    image: createUser.image,
+  };
 };
 
 const getUserProfileFromDB = async (
   user: JwtPayload
 ): Promise<Partial<IUser>> => {
   const { id } = user;
-  const isExistUser = await User.isExistUserById(id);
+  const isExistUser = await User.isValidUser(id);
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
-  }
+  };
 
   return isExistUser;
 };
