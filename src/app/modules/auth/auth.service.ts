@@ -17,6 +17,7 @@ import generateOTP from '../../../util/generateOTP';
 import { ResetToken } from '../resetToken/resetToken.model';
 import { User } from '../user/user.model';
 import { STATUS } from '../../../enums/user';
+import ms, { StringValue } from "ms";
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -35,12 +36,12 @@ const loginUserFromDB = async (payload: ILoginData) => {
   }
   
   //check user status
-  if (isExistUser.status === STATUS.UN_VERIFIED || isExistUser.status === STATUS.BLOCKED || isExistUser.status === STATUS.DELETED) {
+  if (isExistUser.status === STATUS.BLOCKED || isExistUser.status === STATUS.DELETED) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       `You don’t have permission to access this content.It looks like your account has been ${isExistUser.status}.`
     );
-  }
+  };
   
   //check match password
   if (
@@ -54,11 +55,58 @@ const loginUserFromDB = async (payload: ILoginData) => {
   const createToken = jwtHelper.createToken(
     { id: isExistUser._id, role: isExistUser.role, email: isExistUser.email },
     config.jwt.jwt_secret as Secret,
-    config.jwt.jwt_expire_in
+    config.jwt.jwt_expire_in as StringValue
   );
+
+  //refresh token
+  const msVal: number | undefined = ms(config.jwt.jwt_refresh_expire_in as StringValue);
+  const expireAt = new Date( Date.now() + msVal );
+  const refreshToken = jwtHelper.createToken(
+    { id: isExistUser._id, role: isExistUser.role, email: isExistUser.email },
+    config.jwt.jwt_secret as Secret,
+    config.jwt.jwt_refresh_expire_in as StringValue
+  );
+
+  await ResetToken.create({
+    user: isExistUser._id,
+    token: refreshToken,
+    expireAt: expireAt
+  })
   
-  return { createToken };
+  return { accessToken: createToken, refreshToken };
 };
+
+// refresh access token
+const refreshToken = async ( { refreshToken }: { refreshToken: string} ) => {
+  
+  const isRefreshTokenValid = await ResetToken.findOne({
+    token: refreshToken,
+    expireAt: { $gt: new Date() }
+  });
+
+  if (!isRefreshTokenValid) {
+    throw new ApiError(
+      StatusCodes.UNAUTHORIZED,
+      "Invalid or expired refresh token"
+    )  
+  };
+
+  const user = await User.findById( isRefreshTokenValid.user );
+  if (!user) {
+    throw new ApiError(
+      StatusCodes.UNAUTHORIZED,
+      "User not found!"
+    )
+  };
+
+  const newAccessToken = jwtHelper.createToken(
+    { id: user._id, role: user.role, email: user.email },
+    config.jwt.jwt_secret as Secret,
+    config.jwt.jwt_expire_in as StringValue
+  );
+
+  return newAccessToken 
+}
 
 //forget password
 const forgetPasswordToDB = async (email: string) => {
@@ -79,7 +127,7 @@ const forgetPasswordToDB = async (email: string) => {
   //save to DB
   const authentication = {
     oneTimeCode: otp,
-    expireAt: new Date(Date.now() + 3 * 60000),
+    expireAt: new Date(Date.now() + 5 * 60000),
   };
   await User.findOneAndUpdate({ email }, { $set: { authentication } });
 };
@@ -148,12 +196,11 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
 
 //forget password
 const resetPasswordToDB = async (
-  token: string,
   payload: IAuthResetPassword
 ) => {
   const { newPassword, confirmPassword } = payload;
   //isExist token
-  const isExistToken = await ResetToken.isExistToken(token);
+  const isExistToken = await ResetToken.isExistToken(payload.token);
   if (!isExistToken) {
     throw new ApiError(StatusCodes.UNAUTHORIZED, 'You are not authorized');
   }
@@ -170,7 +217,7 @@ const resetPasswordToDB = async (
   }
 
   //validity check
-  const isValid = await ResetToken.isExpireToken(token);
+  const isValid = await ResetToken.isExpireToken(payload.token);
   if (!isValid) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
@@ -203,6 +250,7 @@ const resetPasswordToDB = async (
   });
 };
 
+//Change password to db
 const changePasswordToDB = async (
   user: JwtPayload,
   payload: IChangePassword
@@ -250,6 +298,7 @@ const changePasswordToDB = async (
 
 export const AuthService = {
   verifyEmailToDB,
+  refreshToken,
   loginUserFromDB,
   forgetPasswordToDB,
   resetPasswordToDB,
