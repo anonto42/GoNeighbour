@@ -12,6 +12,13 @@ export type IUser = {
   image?: string;
   status: STATUS;
   verified: boolean;
+  reviews: [
+    {
+      star: number,
+      comment: string,
+      from: string
+    }
+  ];
   authentication?: {
     isResetPassword: boolean;
     oneTimeCode: number;

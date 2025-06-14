@@ -52,6 +52,13 @@ const userSchema = new Schema<IUser, UserModal>(
       type: Boolean,
       default: false,
     },
+    reviews:[
+        {
+          star: Number,
+          comment: String,
+          from: String
+      }
+    ],
     authentication: {
       isResetPassword: {
         type: Boolean,
