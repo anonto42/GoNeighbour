@@ -25,4 +25,21 @@ router
     AdminController.UpdateAboutUsData
   )
 
+router
+  .route("/conditions")
+  .get(
+    auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+    AdminController.GetConditionsData
+  )
+  .post(
+    auth( USER_ROLES.ADMIN ),
+    validateRequest( AdminValidation.createAbouUsZodSchema ),
+    AdminController.CreateConditionsData
+  )
+  .patch(
+    auth( USER_ROLES.ADMIN ),
+    validateRequest( AdminValidation.createAbouUsZodSchema ),
+    AdminController.UpdateAboutUsData
+  )
+
 export const AdminRouter = router;

@@ -49,8 +49,51 @@ const UpdateAboutUsData = catchAsync(
   }
 );
 
+const GetConditionsData = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const result = await AdminServices.get_condition_data(user);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get the condition data!',
+      data: result,
+    });
+  }
+);
+
+const CreateConditionsData = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const { ...data } = req.body;
+    const result = await AdminServices.create_conditon(user,data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully created the condition data!',
+      data: result,
+    });
+  }
+);
+
+const UpdateConditionsData = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const { ...data } = req.body;
+    const result = await AdminServices.update_condition(user,data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully update the condition data!',
+      data: result,
+    });
+  }
+);
 
 export const AdminController = { 
     PostAboutUs,GetAboutUsData,UpdateAboutUsData,
-
+    GetConditionsData,CreateConditionsData,UpdateConditionsData
 };
