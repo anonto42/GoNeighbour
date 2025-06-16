@@ -148,4 +148,4 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-export const User = model<IUser, UserModal>('User', userSchema);
+export const User = model<IUser, UserModal>('user', userSchema);
