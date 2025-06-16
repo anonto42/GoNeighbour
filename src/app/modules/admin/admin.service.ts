@@ -68,19 +68,10 @@ const update_about_us = async (
         )
     };
 
-    const newPoliciData = await Policie.findOneAndUpdate(
-        {
-            type: policie_type.ABOUT_US
-        },
-        {
-            data: data.data
-        },
-        { 
-            new: true
-        }
-    );
+    isAboutUsExist.context = data.data;
+    await isAboutUsExist.save();
 
-    return newPoliciData;
+    return
 };
 
 const get_condition_data = async (
@@ -138,26 +129,75 @@ const update_condition = async (
         )
     };
 
-    const newPoliciData = await Policie.findOneAndUpdate(
-        {
-            type: policie_type.ABOUT_US
-        },
-        {
-            data: data.data
-        },
-        { 
-            new: true
-        }
-    );
+    isAboutUsExist.context = data.data
+    await isAboutUsExist.save();
+
+    return
+};
+
+const get_faq_data = async (
+    payload: JwtPayload,
+): Promise<any> => {
+    
+    await User.isValidUser(payload.id)
+    
+    const isAboutUsExist = await Policie.findOne({type: policie_type.FAQ});
+    if (!isAboutUsExist) {
+        throw new ApiError(
+            StatusCodes.NOT_ACCEPTABLE,
+            "FAQ data was not exist!"
+        )
+    };
+
+    return isAboutUsExist;
+};
+
+const create_faq = async (
+    payload: JwtPayload,
+    data : about_us
+): Promise<any> => {
+    
+    await User.isValidUser(payload.id)
+    
+    const isAboutUsExist = await Policie.findOne({type: policie_type.FAQ});
+    if (isAboutUsExist) {
+        throw new ApiError(
+            StatusCodes.NOT_ACCEPTABLE,
+            "Already another faq data was exist you must delete the older one to create a new one or you can update the older one!"
+        )
+    };
+
+    const newPoliciData = await Policie.create({
+        context: data.data,
+        type: policie_type.FAQ
+    });
 
     return newPoliciData;
 };
 
+const update_faq = async (
+    payload: JwtPayload,
+    data : about_us
+): Promise<any> => {
+    
+    await User.isValidUser(payload.id);
+    
+    const isAboutUsExist = await Policie.findOne({type: policie_type.FAQ});
+    if (!isAboutUsExist) {
+        throw new ApiError(
+            StatusCodes.NOT_ACCEPTABLE,
+            "FAQ data was not exist at first you must create the about us data to update the data!"
+        )
+    };
+
+    isAboutUsExist.context = data.data
+    await isAboutUsExist.save()
+
+    return
+};
+
 export const AdminServices = {
-  create_about_us,
-  get_about_us,
-  update_about_us,
-  get_condition_data,
-  create_conditon,
-  update_condition
+  create_about_us,get_about_us,update_about_us,
+  get_condition_data,create_conditon,update_condition,
+  get_faq_data,create_faq,update_faq
 };

@@ -93,7 +93,52 @@ const UpdateConditionsData = catchAsync(
   }
 );
 
+const GetFAQData = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const result = await AdminServices.get_faq_data(user);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get the faq data!',
+      data: result,
+    });
+  }
+);
+
+const CreateFAQData = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const { ...data } = req.body;
+    const result = await AdminServices.create_faq(user,data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully created the faq data!',
+      data: result,
+    });
+  }
+);
+
+const UpdateFAQData = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const { ...data } = req.body;
+    const result = await AdminServices.update_faq(user,data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully update the faq data!',
+      data: result,
+    });
+  }
+);
+
 export const AdminController = { 
     PostAboutUs,GetAboutUsData,UpdateAboutUsData,
-    GetConditionsData,CreateConditionsData,UpdateConditionsData
+    GetConditionsData,CreateConditionsData,UpdateConditionsData,
+    GetFAQData,CreateFAQData,UpdateFAQData
 };

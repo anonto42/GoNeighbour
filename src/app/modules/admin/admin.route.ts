@@ -42,4 +42,21 @@ router
     AdminController.UpdateAboutUsData
   )
 
+router
+  .route("/faq")
+  .get(
+    auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+    AdminController.GetFAQData
+  )
+  .post(
+    auth( USER_ROLES.ADMIN ),
+    validateRequest( AdminValidation.createAbouUsZodSchema ),
+    AdminController.CreateFAQData
+  )
+  .patch(
+    auth( USER_ROLES.ADMIN ),
+    validateRequest( AdminValidation.createAbouUsZodSchema ),
+    AdminController.UpdateFAQData
+  )
+
 export const AdminRouter = router;
