@@ -17,9 +17,8 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     role: {
       type: String,
-      enum: Object.values(USER_ROLES),
-      default: USER_ROLES.USER,
-      required: true,
+      enum: USER_ROLES,
+      default: USER_ROLES.USER
     },
     contact:{
       type: String
