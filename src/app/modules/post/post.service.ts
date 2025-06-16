@@ -42,8 +42,26 @@ const createPost = async (
     }
 }
 
+const aPost = async (
+    payload: JwtPayload,
+    postId: any
+) => {
+
+    await User.isValidUser(payload.id);
+
+    const isPostExist = await Post.findById(postId);
+    if (!isPostExist) {
+        throw new ApiError(
+            StatusCodes.NOT_FOUND,
+            "Post dos't exist!"
+        )
+    }
+
+    return isPostExist
+}
 
 
 export const PostService = {
-    createPost
+    createPost,
+    aPost
 }

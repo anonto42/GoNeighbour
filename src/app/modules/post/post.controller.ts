@@ -37,6 +37,22 @@ const createPost = catchAsync(
   }
 );
 
+const aPost = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const postID = req.params.id;
+    const user = req.user;
+
+    const result = await PostService.aPost(user,postID);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully created the post',
+      data: result,
+    });
+  }
+);
+
 export const PostController = { 
-    createPost
+  createPost,aPost
 };

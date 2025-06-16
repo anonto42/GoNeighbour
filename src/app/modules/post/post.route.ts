@@ -10,8 +10,13 @@ import { PostController } from "./post.controller";
 const router = Router();
 
 router
-    .route("/")
-    .get()
+    .route("/:id")
+    .get(
+        auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+        PostController.aPost
+    )
+router
+    .route('/do')
     .post(
         auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
         fileUploadHandler(),
