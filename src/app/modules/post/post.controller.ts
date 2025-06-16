@@ -12,14 +12,14 @@ const createPost = catchAsync(
 
     const images = getMultipleFilesPath(req.files,"image")
 
-    const modified_location = {
-        inText: userData.location,
-        geoFormet: {
-            type: "Point",
-            coordinates: [userData.lat, userData.lan]
-        }
-    };
-    userData.location = modified_location;
+    // const modified_location = {
+    //     inText: userData.location,
+    //     geoJSON: {
+    //         type: "Point",
+    //         coordinates: [userData.lon, userData.lat]
+    //     }
+    // };
+    // userData.location = modified_location;
 
     const data = {
         images,

@@ -34,28 +34,51 @@ const postSchema = new Schema<postInterface>({
             type: String,
         }
     ],
-    location: {
-        inText: {
-            type: String,
-            required: true
-        },
-        geoFormet: {
-            type: {
-                type: String,
-                required: true,
-                enum: ["Point"],
-                default: "Point"
-            },
-            coordinates:{
-                type: [Number],
-                required: true
-            }
-        }
-    }
+    lat: {
+      type: Number,
+      required: true,
+    },
+    lot: {
+      type: Number,
+      required: true,
+    },
+    // location: {
+    //     inText: {
+    //         type: String,
+    //         required: true
+    //     },
+        // latlog: {
+        //     type: {
+        //         type: String,
+        //         required: true,
+        //         enum: ["Point"],
+        //         default: "Point"
+        //     },
+        //     coordinates:{
+        //         type: [Number],
+        //         required: true
+        //     }
+        // }
+        
+        // }
+        location: {
+           type: { type: String, enum: ['Point'], default: 'Point' },
+           coordinates: { type: [Number], required: false },
+       },
 },{
     timestamps: true
 })
 
-postSchema.index({ location: "2dsphere" });
+postSchema.pre('save', function (next) {
+  if (this.lat && this.lot) {
+    this.location = {
+      type: 'Point',
+      coordinates: [this.lat, this.lot],
+    };
+  }
+  next();
+});
+
+postSchema.index({ "location": "2dsphere" });
 
 export const Post = model<postInterface>('post', postSchema);

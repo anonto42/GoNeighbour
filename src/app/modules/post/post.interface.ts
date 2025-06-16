@@ -8,11 +8,17 @@ export type postInterface = {
     work_time: Date,
     deadline: Date,
     images: string[],
+    // location: {
+    //     inText: string,
+    //     geoFormet: {
+    //         type: string,
+    //         coordinates: []
+    //     }         
+    // }
     location: {
-        inText: string,
-        geoFormet: {
             type: string,
-            coordinates: []
-        }         
-    }
+            coordinates: number[]
+        } ,
+    lat: number,
+    lot: number
 }

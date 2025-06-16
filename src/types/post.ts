@@ -1,6 +1,6 @@
 
 export type postT = {
-    createdBy: string,
+    createdBy: any,
     title: string,
     description: string,
     amount: number,
