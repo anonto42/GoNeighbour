@@ -27,7 +27,7 @@ router
         auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
         fileUploadHandler(),
         validateRequest( PostValidation.updatePostZodSchema ),
-        PostController.createPost
+        PostController.updateAPost
     )
 
 

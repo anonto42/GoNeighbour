@@ -7,5 +7,19 @@ export type postT = {
     work_time: Date,
     deadline: Date,
     images: string[],
-    location: {}
+    location: any
+}
+
+export type updatePostT = {
+    postId: any,
+    createdBy: any,
+    title: string,
+    description: string,
+    amount: number,
+    work_time: Date,
+    deadline: Date,
+    images: string[],
+    location: any,
+    lat: number,
+    lot: number
 }

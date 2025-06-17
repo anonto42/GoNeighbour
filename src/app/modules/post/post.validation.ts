@@ -18,6 +18,7 @@ const createPostZodSchema = z.object({
 
 const updatePostZodSchema = z.object({
   body: z.object({
+    postId: z.string({required_error: "you must give the post id to update the post!"}),
     createdBy: z.string().optional(),
     title: z.string().optional(),
     description: z.string().optional(),
@@ -25,8 +26,8 @@ const updatePostZodSchema = z.object({
     work_time: z.string().optional(),
     deadline: z.string().optional(),
     location: z.any().optional(),
-    lat: z.number().optional(),
-    lan: z.number().optional(),
+    lat: z.any().optional(),
+    lan: z.any().optional(),
     image: z.any().optional()
   })
 });

@@ -2,7 +2,7 @@ import { model, Schema } from "mongoose";
 import { postInterface } from "./post.interface";
 
 
-const postSchema = new Schema<postInterface>({
+const postSchema = new Schema<postInterface>({ 
     title: {
         type: String,
         unique: true,
@@ -42,29 +42,10 @@ const postSchema = new Schema<postInterface>({
       type: Number,
       required: true,
     },
-    // location: {
-    //     inText: {
-    //         type: String,
-    //         required: true
-    //     },
-        // latlog: {
-        //     type: {
-        //         type: String,
-        //         required: true,
-        //         enum: ["Point"],
-        //         default: "Point"
-        //     },
-        //     coordinates:{
-        //         type: [Number],
-        //         required: true
-        //     }
-        // }
-        
-        // }
-        location: {
-           type: { type: String, enum: ['Point'], default: 'Point' },
-           coordinates: { type: [Number], required: false },
-       },
+    location: {
+       type: { type: String, enum: ['Point'], default: 'Point' },
+       coordinates: { type: [Number], required: false },
+    },
 },{
     timestamps: true
 })

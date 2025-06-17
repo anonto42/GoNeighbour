@@ -53,6 +53,30 @@ const aPost = catchAsync(
   }
 );
 
+const updateAPost = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { ...userData } = req.body;
+    const user = req.user;
+
+    const images = getMultipleFilesPath(req.files,"image")
+
+    const data = {
+      images,
+      ...userData
+    }
+
+    const result = await PostService.updatedPost(user,data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully updated the post',
+      data: result,
+    });
+  }
+);
+
+
 export const PostController = { 
-  createPost,aPost
+  createPost,aPost,updateAPost
 };

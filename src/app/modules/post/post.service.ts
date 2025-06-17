@@ -1,6 +1,6 @@
 import { JwtPayload } from "jsonwebtoken";
 import ApiError from "../../../errors/ApiError";
-import { postT } from "../../../types/post";
+import { postT, updatePostT } from "../../../types/post";
 import { User } from "../user/user.model";
 import unlinkFile from "../../../shared/unlinkFile";
 import { Post } from "./post.model";
@@ -27,7 +27,7 @@ const createPost = async (
         }
         const createdPost = await Post.create(data);
         
-        data.images.map( e => unlinkFile(e) );
+        // data.images.map( e => unlinkFile(e) );
         
         return createdPost
         
@@ -49,7 +49,10 @@ const aPost = async (
 
     await User.isValidUser(payload.id);
 
-    const isPostExist = await Post.findById(postId);
+    const isPostExist = await Post
+                                .findById(postId)
+                                .populate("createdBy","reviews image email name -_id")
+                                .select("-lat -lot -__v -location")
     if (!isPostExist) {
         throw new ApiError(
             StatusCodes.NOT_FOUND,
@@ -60,8 +63,44 @@ const aPost = async (
     return isPostExist
 }
 
+const updatedPost = async (
+    payload: JwtPayload,
+    data: updatePostT
+) => {
+    try {
+
+        await User.isValidUser(payload.id);
+
+        const isPostExist = await Post.findById(data.postId);
+        if (!isPostExist) {
+            throw new ApiError(
+                StatusCodes.BAD_REQUEST,
+                `Post not founded to update!`
+            )
+        }
+        const createdPost = await Post.findByIdAndUpdate(data.postId,data,{ new: true }).select("-location - lat -lot");
+        
+        if (data.images.length > 0) {
+            isPostExist.images.map( e => unlinkFile(e) );
+        }
+        
+        return createdPost
+        
+    } catch (error: any) {
+        
+        if (data.images.length > 0) {
+            data.images.map( e => unlinkFile(e) );
+        }
+
+        throw new ApiError(
+            error.status,
+            error.message
+        )
+    }
+}
 
 export const PostService = {
     createPost,
-    aPost
+    aPost,
+    updatedPost
 }
