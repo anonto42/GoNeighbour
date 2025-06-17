@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import ApiError from '../../../errors/ApiError';
 import { User } from '../user/user.model';
 import { ChatRoom } from './chat.model';
+import mongoose from 'mongoose';
 
 const createChat = async (
   sender: any, 
@@ -23,8 +24,9 @@ const createChat = async (
   };
 
   const isChatExist = await ChatRoom.findOne({
+    name: chatInfo.chatName,
     users: { $all:[ sender, chatInfo.receiver ] }
-  }).populate("users","email name")
+  }).populate("participants","email name image")
 
 
   if (!isChatExist) {
@@ -37,7 +39,7 @@ const createChat = async (
     }
   );
 
-    return await chatRoom.populate("users","email name");
+    return await chatRoom.populate("participants","email name");
   }
 
   return isChatExist
@@ -45,7 +47,14 @@ const createChat = async (
 };
 
 const getChatById = async ( id: string ) => {
-  return await ChatRoom.findById(id).populate("participants","name email");
+  
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error('Invalid ObjectId');
+  }
+  
+  const chat = await ChatRoom.findById(id);
+  
+  return chat;
 };
 
 const allChats = async (

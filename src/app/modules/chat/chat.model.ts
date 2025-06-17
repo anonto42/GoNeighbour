@@ -4,8 +4,7 @@ import { ChatModel, IChat } from "./chat.interface";
 
 const chatRoom = new Schema<IChat, ChatModel>({
     name: {
-        type: String,
-        required: true
+        type: String
     },
     participants:{
         type: [String],
@@ -15,4 +14,4 @@ const chatRoom = new Schema<IChat, ChatModel>({
     timestamps: true
 })
 
-export const ChatRoom = model<IChat, ChatModel>("/chat", chatRoom);
+export const ChatRoom = model<IChat, ChatModel>("chat", chatRoom);

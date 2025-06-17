@@ -73,7 +73,7 @@ const deleteChat = catchAsync(async (
     )
   }
 
-  const result = await ChatService.createChat(user.id, chatId);
+  const result = await ChatService.deleteChat(user.id, chatId);
 
   sendResponse(res, {
     success: true,
