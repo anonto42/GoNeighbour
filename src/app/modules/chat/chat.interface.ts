@@ -1,7 +1,7 @@
 import { Model, Types } from 'mongoose';
 
 export type IChat = {
-  name: string
+  name: string;
   participants: string[];
 };
 

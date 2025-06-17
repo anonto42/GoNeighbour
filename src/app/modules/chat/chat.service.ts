@@ -1,0 +1,113 @@
+import { StatusCodes } from 'http-status-codes';
+import ApiError from '../../../errors/ApiError';
+import { User } from '../user/user.model';
+import { ChatRoom } from './chat.model';
+
+const createChat = async (
+  sender: any, 
+  chatInfo: {
+    receiver: any,
+    chatName: string
+  }, 
+) => {
+
+  const isUser = await User.isValidUser(sender);
+  const isRecever = await User.isValidUser( chatInfo.receiver );
+  
+  if (!isRecever) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Receiver not found");
+  };
+
+  if (!isUser) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+  };
+
+  const isChatExist = await ChatRoom.findOne({
+    users: { $all:[ sender, chatInfo.receiver ] }
+  }).populate("users","email name")
+
+
+  if (!isChatExist) {
+    const chatRoom = await ChatRoom.create({
+      chatName: chatInfo.chatName,
+      participants: [
+        sender,
+        chatInfo.receiver
+      ]
+    }
+  );
+
+    return await chatRoom.populate("users","email name");
+  }
+
+  return isChatExist
+  
+};
+
+const getChatById = async ( id: string ) => {
+  return await ChatRoom.findById(id).populate("participants","name email");
+};
+
+const allChats = async (
+  data:{
+    id: string, 
+    page: number, 
+    limit: number
+  }
+  ) => {
+  const { id, page = 1, limit = 10} = data;
+
+  await User.isValidUser(id);
+
+  const skip = (page - 1) * limit;
+
+  const chats = await ChatRoom.find({
+    participants: { $in: [id] }
+  })
+    .populate("participants", "email name")
+    .skip(skip)
+    .limit(limit);
+
+  const totalChats = await ChatRoom.countDocuments({
+    participants: { $in: [id] }
+  });
+
+  return {
+    chats,
+    totalChats,
+    currentPage: page,
+    totalPages: Math.ceil(totalChats / limit),
+  };
+};
+
+const deleteChat = async ( userID: string, id: string ) => {
+  const user = await User.isValidUser(userID);
+
+  const chatRoom = await ChatRoom.findById(id);
+  if (!chatRoom) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      `Chat not founded!`
+    ); 
+  };
+
+  const isInChat = chatRoom.participants.filter( ( e: any ) => e === user._id );
+  if (!isInChat) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      `You are not a member of this chat so you can delete this chat`
+    );
+  };
+
+  await ChatRoom.deleteOne({ _id: chatRoom._id });
+
+  return true
+
+};
+
+export const ChatService = {
+  createChat,
+  getChatById,
+  allChats,
+  deleteChat
+};
