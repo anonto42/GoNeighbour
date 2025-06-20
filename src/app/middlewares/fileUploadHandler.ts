@@ -24,7 +24,13 @@ const fileUploadHandler = () => {
     destination: (req, file, cb) => {
       let uploadDir;
       switch (file.fieldname) {
+        case 'image1':
+          uploadDir = path.join(baseUploadDir, 'image');
+          break;
         case 'image':
+          uploadDir = path.join(baseUploadDir, 'image');
+          break;
+        case 'image2':
           uploadDir = path.join(baseUploadDir, 'image');
           break;
         case 'media':
@@ -70,6 +76,36 @@ const fileUploadHandler = () => {
           )
         );
       }
+    } else if (file.fieldname === 'image1') {
+      if (
+        file.mimetype === 'image/jpeg' ||
+        file.mimetype === 'image/png' ||
+        file.mimetype === 'image/jpg'
+      ) {
+        cb(null, true);
+      } else {
+        cb(
+          new ApiError(
+            StatusCodes.BAD_REQUEST,
+            'Only .jpeg, .png, .jpg file supported'
+          )
+        );
+      }
+    } else if (file.fieldname === 'image2') {
+      if (
+        file.mimetype === 'image/jpeg' ||
+        file.mimetype === 'image/png' ||
+        file.mimetype === 'image/jpg'
+      ) {
+        cb(null, true);
+      } else {
+        cb(
+          new ApiError(
+            StatusCodes.BAD_REQUEST,
+            'Only .jpeg, .png, .jpg file supported'
+          )
+        );
+      }
     } else if (file.fieldname === 'media') {
       if (file.mimetype === 'video/mp4' || file.mimetype === 'audio/mpeg') {
         cb(null, true);
@@ -96,7 +132,9 @@ const fileUploadHandler = () => {
     storage: storage,
     fileFilter: filterFilter,
   }).fields([
-    { name: 'image', maxCount: 3 },
+    { name: 'image', maxCount: 1 },
+    { name: 'image1', maxCount: 1 },
+    { name: 'image2', maxCount: 1 },
     { name: 'media', maxCount: 3 },
     { name: 'doc', maxCount: 3 },
   ]);

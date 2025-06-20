@@ -29,6 +29,10 @@ const userSchema = new Schema<IUser, UserModal>(
       unique: true,
       lowercase: true,
     },
+    faceVerifyed:{
+      type: Boolean,
+      default: false
+    },
     password: {
       type: String,
       required: true,

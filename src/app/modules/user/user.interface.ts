@@ -7,6 +7,7 @@ export type IUser = {
   role: USER_ROLES;
   contact: string;
   email: string;
+  faceVerifyed: boolean;
   password: string;
   location: string;
   image?: string;
