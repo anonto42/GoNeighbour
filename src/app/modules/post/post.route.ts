@@ -10,13 +10,13 @@ import { PostController } from "./post.controller";
 const router = Router();
 
 router
-    .route("/:id")
+    .route("/one/:id")
     .get(
         auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
         PostController.aPost
     )
 router
-    .route('/do')
+    .route('/upload/do')
     .post(
         auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
         fileUploadHandler(),
@@ -30,5 +30,32 @@ router
         PostController.updateAPost
     )
 
+router 
+    .route("/latest")
+    .get(
+        auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+        PostController.lastPosts
+    )
+
+router
+    .route("/favorite")
+    .get(
+        auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+        PostController.favorites
+    )
+
+router
+    .route("/favorite/add/:id")
+    .post(
+        auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+        PostController.addFavorites
+    )
+
+router
+    .route("/favorite/delete/:id")
+    .delete(
+        auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+        PostController.removeFavorites
+    )
 
 export const PostRouter = router;

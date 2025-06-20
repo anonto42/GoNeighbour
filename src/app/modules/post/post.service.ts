@@ -99,8 +99,114 @@ const updatedPost = async (
     }
 }
 
+const lastPosts = async (
+    user: JwtPayload,
+    limit: number,
+    page: number
+) => {
+    const userFromDB = await User.isValidUser(user.id);
+    
+    const skipCount = (page - 1) * limit;
+
+    const posts = await Post.find({ createdBy: userFromDB._id })
+        .populate("createdBy","name email image")
+        .skip(skipCount)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+    return posts;
+}
+
+const addTofavorite = async (
+    user: JwtPayload,
+    postID: string
+) => {
+    const userFromDB = await User.isValidUser( user.id );
+    const userO = await User.findById(userFromDB._id);
+    const isPostExist = await Post.findById(postID);
+    if (!isPostExist) {
+        throw new ApiError(
+            StatusCodes.NOT_FOUND,
+            "Post not founded!"
+        )
+    };
+
+    userO?.favorites.push(isPostExist._id);
+    await userO?.save();
+
+    return true
+}
+
+const getFavorite = async (
+    user: JwtPayload,
+    limit: number,
+    page: number
+) => {
+    const userFromDB = await User.isValidUser(user.id);
+
+    const skipCount = (page - 1) * limit;
+
+    const userWithFavorites = await User.findById(userFromDB._id)
+                                        .select("-location -__v -lat -lot")
+                                        .populate({
+                                            path: 'favorites',
+                                            populate: {
+                                                path: 'createdBy', 
+                                                select: 'name email image'  
+                                            }
+                                        });
+
+    if (!userWithFavorites || !userWithFavorites.favorites) {
+        return [];  
+    }
+
+    const paginatedFavorites = userWithFavorites.favorites.slice(skipCount, skipCount + limit);
+
+    const formattedFavorites = paginatedFavorites.map((favorite: any) => {
+    const favoriteData = favorite.toObject(); 
+
+    delete favoriteData.location;
+    delete favoriteData.__v;
+
+    return {
+        ...favoriteData, 
+        createdBy: favorite.createdBy ? {
+            name: favorite.createdBy.name,
+            email: favorite.createdBy.email,
+            image: favorite.createdBy.image
+        } : null 
+    };
+})
+
+    return formattedFavorites;
+};
+
+const removeFromFavorite = async (
+    payload: JwtPayload,
+    id: any
+) => {
+
+    const user = await User.findById(payload.id);
+    if (!user) {
+        throw new ApiError(
+            StatusCodes.NOT_FOUND,
+            "User not found!"
+        )
+    }
+
+    user.favorites = user.favorites.filter( e => e != id );
+
+    user.save();
+
+    return true
+}
+
 export const PostService = {
     createPost,
     aPost,
-    updatedPost
+    updatedPost,
+    removeFromFavorite,
+    lastPosts,
+    addTofavorite,
+    getFavorite
 }

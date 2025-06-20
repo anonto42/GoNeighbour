@@ -4,6 +4,7 @@ import catchAsync from '../../../shared/catchAsync';
 import { getMultipleFilesPath, getSingleFilePath } from '../../../shared/getFilePath';
 import sendResponse from '../../../shared/sendResponse';
 import { PostService } from './post.service';
+import ApiError from '../../../errors/ApiError';
 
 const createPost = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -76,7 +77,77 @@ const updateAPost = catchAsync(
   }
 );
 
+const lastPosts = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const { limit, page } = req.body;
+
+    const result = await PostService.lastPosts(user,limit,page);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get latest post',
+      data: result,
+    });
+  }
+);
+
+const favorites = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const { limit, page } = req.body;
+
+    const result = await PostService.getFavorite(user,limit,page);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get favorite posts',
+      data: result,
+    });
+  }
+);
+
+const addFavorites = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const postID = req.params.id;
+
+    if (!postID) {
+      throw new ApiError(344,"This is an error")
+    }
+    const result = await PostService.addTofavorite(user,postID);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully added on the favorites!',
+      data: result,
+    });
+  }
+);
+
+const removeFavorites = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const postID = req.params.id;
+
+    if (!postID) {
+      throw new ApiError(344,"This is an error")
+    }
+    const result = await PostService.removeFromFavorite(user,postID);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully added on the favorites!',
+      data: result,
+    });
+  }
+);
 
 export const PostController = { 
-  createPost,aPost,updateAPost
+  createPost,aPost,updateAPost,lastPosts,
+  favorites,addFavorites,removeFavorites
 };

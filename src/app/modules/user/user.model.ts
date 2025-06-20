@@ -55,6 +55,12 @@ const userSchema = new Schema<IUser, UserModal>(
       type: Boolean,
       default: false,
     },
+    favorites: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "post"
+      }
+    ],
     reviews:[
         {
           star: Number,
@@ -139,16 +145,16 @@ userSchema.statics.isValidUser = async (id: string) => {
 //check user
 userSchema.pre('save', async function (next) {
   //check user
-  const isExist = await User.findOne({ email: this.email });
-  if (isExist) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Email already exist!');
-  }
+  // const isExist = await User.findOne({ email: this.email });
+  // if (!isExist) {
+  //   throw new ApiError(StatusCodes.BAD_REQUEST, 'User not found!');
+  // }
 
   //password hash
-  this.password = await bcrypt.hash(
-    this.password,
-    Number(config.bcrypt_salt_rounds)
-  );
+  // this.password = await bcrypt.hash(
+  //   this.password,
+  //   Number(config.bcrypt_salt_rounds)
+  // );
   next();
 });
 

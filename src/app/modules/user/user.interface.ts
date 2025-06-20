@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { STATUS, USER_ROLES } from '../../../enums/user';
 
 export type IUser = {
@@ -13,6 +13,7 @@ export type IUser = {
   image?: string;
   status: STATUS;
   verified: boolean;
+  favorites: Types.ObjectId[];
   reviews: [
     {
       star: number,
