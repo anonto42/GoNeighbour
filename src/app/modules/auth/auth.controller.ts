@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { AuthService } from './auth.service';
+import { getSingleFilePath } from '../../../shared/getFilePath';
 
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const { ...verifyData } = req.body;
@@ -77,11 +78,26 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const faceVerification = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const image1 = getSingleFilePath(req.files,"image1")
+  const image2 = getSingleFilePath(req.files,"image2")
+  const responce = await AuthService.faceVerification(image1, image2, user);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    data: responce,
+    message: 'Face verification testing cheacked successfully!',
+  });
+});
+
 export const AuthController = {
   verifyEmail,
   loginUser,
   forgetPassword,
   resetPassword,
   changePassword,
-  refreshAccesstoken
+  refreshAccesstoken,
+  faceVerification
 };
