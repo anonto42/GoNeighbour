@@ -14,6 +14,7 @@ export type IUser = {
   status: STATUS;
   verified: boolean;
   favorites: Types.ObjectId[];
+  searchKeywords: string[];
   reviews: [
     {
       star: number,

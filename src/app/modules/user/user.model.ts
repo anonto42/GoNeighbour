@@ -1,7 +1,6 @@
 import bcrypt from 'bcrypt';
 import { StatusCodes } from 'http-status-codes';
 import { model, Schema } from 'mongoose';
-import config from '../../../config';
 import { STATUS, USER_ROLES } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
 import { IUser, UserModal } from './user.interface';
@@ -45,6 +44,11 @@ const userSchema = new Schema<IUser, UserModal>(
     image: {
       type: String,
       default: 'https://i.ibb.co/z5YHLV9/profile.png',
+    },
+    searchKeywords: {
+        type: [String],
+        default: [],
+        maxlength: 5 
     },
     status: {
       type: String,
@@ -142,20 +146,20 @@ userSchema.statics.isValidUser = async (id: string) => {
   return isExist;
 };
 
-//check user
-userSchema.pre('save', async function (next) {
-  //check user
-  // const isExist = await User.findOne({ email: this.email });
-  // if (!isExist) {
-  //   throw new ApiError(StatusCodes.BAD_REQUEST, 'User not found!');
-  // }
+// //check user
+// userSchema.pre('save', async function (next) {
+//   //check user
+//   // const isExist = await User.findOne({ email: this.email });
+//   // if (!isExist) {
+//   //   throw new ApiError(StatusCodes.BAD_REQUEST, 'User not found!');
+//   // }
 
-  //password hash
-  // this.password = await bcrypt.hash(
-  //   this.password,
-  //   Number(config.bcrypt_salt_rounds)
-  // );
-  next();
-});
+//   //password hash
+//   // this.password = await bcrypt.hash(
+//   //   this.password,
+//   //   Number(config.bcrypt_salt_rounds)
+//   // );
+//   next();
+// });
 
 export const User = model<IUser, UserModal>('user', userSchema);

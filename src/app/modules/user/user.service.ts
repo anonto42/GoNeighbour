@@ -9,14 +9,24 @@ import generateOTP from '../../../util/generateOTP';
 import { IUser } from './user.interface';
 import { User } from './user.model';
 import { register } from '../../../types/user';
+import { Post } from '../post/post.model';
+import SearchKeyword from '../keywords/search.model';
+import validator from 'validator';
+import bcrypt from "bcrypt"
+import config from '../../../config';
 
 const createUserToDB = async (payload: Partial<register>): Promise<any> => {
   await User.isExistUserByEmail(payload.email!);
 
+  const hashPasswod = await bcrypt.hash(
+    payload!.password!,
+    Number(config.bcrypt_salt_rounds)
+  );
+
   const user = {
     name: payload.first_name + " " + payload.last_name,
     email: payload.email,
-    password: payload.password,
+    password: hashPasswod,
     role: USER_ROLES.USER
   }
 
@@ -93,8 +103,109 @@ const updateProfileToDB = async (
   };
 };
 
+const searchData = async (
+  payload: JwtPayload,
+  keyword: string, 
+  page: number = 1, 
+  limit: number = 10
+) => {
+  
+    if (typeof keyword !== 'string' || keyword.trim().length === 0) {
+        throw new Error('Invalid keyword format');
+    }
+
+    const sanitizedKeyword = validator.escape(keyword.trim()); 
+
+    const skipCount = (page - 1) * limit;
+
+    const posts = await Post.find({
+        $or: [
+            { title: { $regex: sanitizedKeyword, $options: 'i' } }, 
+            { description: { $regex: sanitizedKeyword, $options: 'i' } }
+        ]
+    })
+    .skip(skipCount) 
+    .limit(limit);  
+
+    if (posts.length === 0) {
+        const randomPosts = await Post.aggregate([
+            { $sample: { size: limit } } 
+        ]);
+        return randomPosts;
+    }
+
+    const searchKeyword = await SearchKeyword.findOne({ keyword: sanitizedKeyword });
+    if (searchKeyword) {
+        searchKeyword.count += 1; 
+        await searchKeyword.save();
+    } else {
+        await SearchKeyword.create({ keyword: sanitizedKeyword });  
+    }
+
+    const user = await User.findById(payload.id);
+    if (user) {
+      user.searchKeywords.unshift(keyword);
+  
+      if (user.searchKeywords.length > 5) {
+        user.searchKeywords.pop();
+      }
+  
+      await user.save();
+    }
+
+    return posts;
+};
+
+const getTopSearchedKeywords = async (limit: number = 10) => {
+  
+  const topKeywords = await SearchKeyword.find()
+    .sort({ count: -1 }) 
+    .limit(limit);
+  
+  return topKeywords;
+};
+
+const home_data = async (
+  paylod: JwtPayload,
+  page: number = 1,
+  limit: number = 10
+) => {
+  const user = await User.findById(paylod.id);
+
+  if (!user) {
+      throw new Error('User not found');
+  }
+
+  const searchKeywords = user.searchKeywords;
+
+  if (searchKeywords.length === 0) {
+      const randomPosts = await Post.aggregate([
+          { $sample: { size: limit } }
+      ]);
+      return randomPosts;
+  }
+
+  const skipCount = (page - 1) * limit;
+
+  const posts = await Post.find({
+      $or: searchKeywords.map((keyword: string) => ({
+          $or: [
+              { title: { $regex: keyword, $options: 'i' } },
+              { description: { $regex: keyword, $options: 'i' } }
+          ]
+      }))
+  })
+  .skip(skipCount) 
+  .limit(limit); 
+
+  return posts;
+} 
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
   updateProfileToDB,
+  searchData,
+  getTopSearchedKeywords,
+  home_data
 };

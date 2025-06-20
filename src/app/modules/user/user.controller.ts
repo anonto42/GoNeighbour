@@ -31,7 +31,6 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-//update profile
 const updateProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
@@ -52,4 +51,54 @@ const updateProfile = catchAsync(
   }
 );
 
-export const UserController = { createUser, getUserProfile, updateProfile };
+const searchData = catchAsync(async (req: Request, res: Response) => {
+  
+  const user = req.user;
+  const {
+    keyWord,
+    limit,
+    page
+   } = req.body;
+
+  const result = await UserService.searchData(user,keyWord,page,limit);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Successfully get the data with keyword!',
+    data: result,
+  });
+});
+
+const top10KeyWords = catchAsync(async (req: Request, res: Response) => {
+  
+  const limit = req.body.limit
+  const result = await UserService.getTopSearchedKeywords(limit);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Successfully get keywords!',
+    data: result,
+  });
+});
+
+const homeData = catchAsync(async (req: Request, res: Response) => {
+  
+  const user = req.user;
+  const { limit, page } = req.body;
+  const result = await UserService.home_data(user, page, limit);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Successfully get home data!',
+    data: result,
+  });
+});
+
+
+export const UserController = { 
+  createUser, getUserProfile, updateProfile,
+  searchData, top10KeyWords, homeData
+};
