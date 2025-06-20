@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 const createPostZodSchema = z.object({
   body: z.object({
-    createdBy: z.string({ required_error: 'first name is required' }),
     title: z.string({ required_error: 'last name is required' }),
     description: z.string({ required_error: 'Email is required' }),
     amount: z.string({ required_error: 'Password is required' }),
@@ -19,7 +18,6 @@ const createPostZodSchema = z.object({
 const updatePostZodSchema = z.object({
   body: z.object({
     postId: z.string({required_error: "you must give the post id to update the post!"}),
-    createdBy: z.string().optional(),
     title: z.string().optional(),
     description: z.string().optional(),
     amount: z.string().optional(),
