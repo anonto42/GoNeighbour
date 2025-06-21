@@ -1,7 +1,6 @@
 import express from 'express';
 import { USER_ROLES } from '../../../enums/user';
 import auth from '../../middlewares/auth';
-import fileUploadHandler from '../../middlewares/fileUploadHandler';
 import validateRequest from '../../middlewares/validateRequest';
 import { AdminValidation } from './admin.validaiton';
 import { AdminController } from './admin.controller';
@@ -57,6 +56,27 @@ router
     auth( USER_ROLES.ADMIN ),
     validateRequest( AdminValidation.createAbouUsZodSchema ),
     AdminController.UpdateFAQData
+  )
+
+router
+  .route("/users")
+  .get(
+    auth( USER_ROLES.ADMIN ),
+    AdminController.usersGet
+  )
+
+router
+  .route("/user/block/:id")
+  .post(
+    auth( USER_ROLES.ADMIN ),
+    AdminController.blockAUser
+  )
+
+router
+  .route("/users/:id")
+  .get(
+    auth( USER_ROLES.ADMIN ),
+    AdminController.getAUserdata
   )
 
 export const AdminRouter = router;

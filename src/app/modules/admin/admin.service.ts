@@ -1,16 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
-import { USER_ROLES } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
-import { emailHelper } from '../../../helpers/emailHelper';
-import { emailTemplate } from '../../../shared/emailTemplate';
-import unlinkFile from '../../../shared/unlinkFile';
-import generateOTP from '../../../util/generateOTP';
-import { register } from '../../../types/user';
 import { about_us } from '../../../types/admin';
 import { User } from '../user/user.model';
 import { Policie } from '../policies/policie.model';
 import { policie_type } from '../../../enums/policie';
+import { STATUS } from '../../../enums/user';
 
 const create_about_us = async (
     // payload: Partial<register>
@@ -196,8 +191,69 @@ const update_faq = async (
     return
 };
 
+const getAllUsers = async (
+    payload: JwtPayload,
+    data: { 
+        limit: number; 
+        page: number;
+    }
+): Promise<any> => {
+
+    await User.isValidUser(payload.id);
+
+    const { limit = 10, page = 1 } = data;
+
+    const skipCount = (page - 1) * limit;
+
+    const allAdminUsers = await User.find()
+                                    .select("-password -authentication -__v")
+                                    .skip(skipCount)
+                                    .limit(limit);
+
+    return allAdminUsers;
+};
+
+const blockAUser = async (
+    userID: any
+): Promise<any> => {
+
+    const user = await User.findById(userID);
+    if (!user) {
+        throw new ApiError(
+            StatusCodes.NOT_FOUND,
+            "user not found!"
+        )
+    };
+
+    user.status = user.status == STATUS.BLOCKED? STATUS.ACTIVE : STATUS.BLOCKED;
+    await user.save();
+
+    return true;
+};
+
+// Have a todo after creating the bid and other oparations
+// it will need the aggrigation
+const getAUser = async (
+    userid: string
+) => {
+
+    const user = await User
+                        .findById(userid)
+                        .select("-authentication -searchKeywords -__v -createdAt -updatedAt")
+
+    if (!user) {
+        throw new ApiError(
+            StatusCodes.BAD_GATEWAY,
+            "User not found to send the data!"
+        )
+    }
+
+    return user;
+};
+
 export const AdminServices = {
   create_about_us,get_about_us,update_about_us,
   get_condition_data,create_conditon,update_condition,
-  get_faq_data,create_faq,update_faq
+  get_faq_data,create_faq,update_faq,
+  getAllUsers,blockAUser,getAUser
 };

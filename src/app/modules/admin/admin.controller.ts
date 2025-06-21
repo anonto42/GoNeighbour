@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
-import { getSingleFilePath } from '../../../shared/getFilePath';
 import sendResponse from '../../../shared/sendResponse';
 import { AdminServices } from './admin.service';
 
@@ -137,8 +136,52 @@ const UpdateFAQData = catchAsync(
   }
 );
 
+const usersGet = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const { ...data } = req.body;
+    const result = await AdminServices.getAllUsers(user,data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get all users data!',
+      data: result,
+    });
+  }
+);
+
+const blockAUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userID = req.params.id;
+    const result = await AdminServices.blockAUser(userID);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully update user status!',
+      data: result,
+    });
+  }
+);
+
+const getAUserdata = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userID = req.params.id;
+    const result = await AdminServices.getAUser(userID);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get a user data',
+      data: result,
+    });
+  }
+);
+
 export const AdminController = { 
     PostAboutUs,GetAboutUsData,UpdateAboutUsData,
     GetConditionsData,CreateConditionsData,UpdateConditionsData,
-    GetFAQData,CreateFAQData,UpdateFAQData
+    GetFAQData,CreateFAQData,UpdateFAQData,
+    usersGet,blockAUser,getAUserdata
 };
