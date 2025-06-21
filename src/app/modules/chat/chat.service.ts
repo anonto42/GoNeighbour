@@ -24,10 +24,9 @@ const createChat = async (
   };
 
   const isChatExist = await ChatRoom.findOne({
-    name: chatInfo.chatName,
-    users: { $all:[ sender, chatInfo.receiver ] }
+    // name: chatInfo.chatName,
+    participants: { $all:[ isUser._id, chatInfo.receiver ] }
   }).populate("participants","email name image")
-
 
   if (!isChatExist) {
     const chatRoom = await ChatRoom.create({

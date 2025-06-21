@@ -17,7 +17,7 @@ const createChat = catchAsync(async (
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: "Chat room created successfull",
+    message: "Chat room get successfull",
     data: result,
   });
 });
