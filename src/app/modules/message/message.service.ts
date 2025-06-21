@@ -4,7 +4,9 @@ import { JwtPayload } from 'jsonwebtoken';
 import { User } from '../user/user.model';
 import { ChatRoom } from '../chat/chat.model';
 import { Message } from './message.model';
-import mongoose, { mongo } from 'mongoose';
+import mongoose from 'mongoose';
+import { socketMessage } from '../../../types/message';
+import { socketHelper } from '../../../helpers/socketHelper';
 
 const sendMessage = async (
   payload: JwtPayload,
@@ -33,25 +35,24 @@ const sendMessage = async (
 
   const populatedMessage = await message.populate("sender", "name email");
 
-  //@ts-ignore
-  // const io = global.io;
+  // @ts-ignore
+  const io = global.io;
 
-  // const socketMessage: socketMessage = {
-  //   message: message.message,
-  //   messageType: MESSAGE_TYPE.MESSAGE,
-  //   chatId: message.chatID,
-  //   sender: message.sender
-  // }
+  const socketMessage: socketMessage = {
+    message: message.content,
+    chatId: message.chatRoom,
+    sender: message.sender
+  }
 
-  // // Emit the message to all users in the chat except the sender
-  // for (const userId of chat.users) {
-  //   if (userId.toString() !== userID) {
-  //     const targetSocketId = socketHelper.connectedUsers.get(userId.toString());
-  //     if (targetSocketId) {
-  //       io.to(targetSocketId).emit(`socket:message:${userId}`, socketMessage);
-  //     }
-  //   }
-  // }
+  // Emit the message to all users in the chat except the sender
+  for (const userId of chat.participants) {
+    if (userId.toString() !== user._id) {
+      const targetSocketId = socketHelper.connectedUsers.get(userId.toString());
+      if (targetSocketId) {
+        io.to(targetSocketId).emit(`socket:message:${userId}`, socketMessage);
+      }
+    }
+  }
 
   return populatedMessage;
 };
@@ -68,7 +69,7 @@ const getMessages = async (
   const { limit = 10, page = 1 }: { limit?: number; page?: number } = options;
   await User.isValidUser(userID);
  
-    const totalResults = await Message.countDocuments({ chat: chatId });
+    const totalResults = await Message.countDocuments({ chatRoom: chatId });
     const totalPages = Math.ceil(totalResults / limit);
     const pagination = { totalResults, totalPages, currentPage: page, limit };
  
