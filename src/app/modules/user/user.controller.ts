@@ -97,8 +97,42 @@ const homeData = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const sendReportProblem = catchAsync(async (req: Request, res: Response) => {
+  
+  const user = req.user;
+  const { ...data } = req.body;
+  const image = getSingleFilePath(req.files, "image");
+
+  const finalData = {
+    image,
+    ...data
+  }
+  const result = await UserService.userReport_request(user, finalData);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Successfully send a suport request!',
+    data: result,
+  });
+});
+
+const woneReportProblem = catchAsync(async (req: Request, res: Response) => {
+  
+  const user = req.user;
+  const { limit, page } = req.body;
+  const result = await UserService.wone_created_suports(user.id, {page, limit});
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Successfully get wone suport requests data!',
+    data: result,
+  });
+});
 
 export const UserController = { 
   createUser, getUserProfile, updateProfile,
-  searchData, top10KeyWords, homeData
+  searchData, top10KeyWords, homeData,
+  sendReportProblem, woneReportProblem
 };

@@ -14,6 +14,9 @@ import SearchKeyword from '../keywords/search.model';
 import validator from 'validator';
 import bcrypt from "bcrypt"
 import config from '../../../config';
+import { Suport } from '../suport/suport.model';
+import { NotificationModel } from '../notification/notification.model';
+import { socketHelper } from '../../../helpers/socketHelper';
 
 const createUserToDB = async (payload: Partial<register>): Promise<any> => {
   await User.isExistUserByEmail(payload.email!);
@@ -201,11 +204,82 @@ const home_data = async (
   return posts;
 } 
 
+const userReport_request = async (
+  user: JwtPayload,
+  data: {
+    title: string,
+    description: string,
+    image: string
+  }
+) => {
+  try {
+
+    const userData = await User.isValidUser(user.id);
+    const admin = await User.find({role: USER_ROLES.ADMIN}).lean().exec();
+    const totalAdmin = admin.map(adminUser => ({
+        id: adminUser._id.toString(),
+        name: adminUser.name,
+        email: adminUser.email,
+    }));
+    const suport = await Suport.create({
+      user: userData._id,
+      title: data.title,
+      description: data.description,
+      image: data.image
+    });
+
+    //@ts-ignore
+    const io = global.io
+
+    for ( let data of totalAdmin ){
+      
+      const not = await NotificationModel.create({
+        from: suport.user,
+        content: suport.image,
+        discription: suport.description,
+        //@ts-ignore
+        for: data._id,
+        title: suport.title
+      })
+      //@ts-ignore
+      const targetSocketId = socketHelper.connectedUsers.get(data.id);
+      if (targetSocketId) {
+        //@ts-ignore
+        io.to(targetSocketId).emit(`socket:notification:${data.id}`, not);
+      }
+    };
+
+    return suport
+
+  } catch (error: any) {
+    
+    if (data.image) {
+      unlinkFile(data.image)
+    }
+    throw new ApiError(StatusCodes.NOT_FOUND, error.message)
+  }
+}
+
+const wone_created_suports = async (
+  userID: string,
+  option: {
+    limit: number,
+    page: number
+  }
+) => {
+  const user = await User.isValidUser( userID );
+  const skipCount = (option.page - 1) * option.limit;
+
+  return await Suport.find({user: user._id}).populate("user","name email image").skip(skipCount).limit(option.limit)
+}
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
   updateProfileToDB,
   searchData,
   getTopSearchedKeywords,
-  home_data
+  home_data,
+  userReport_request,
+  wone_created_suports
 };

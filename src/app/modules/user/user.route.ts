@@ -61,4 +61,17 @@ router
     UserController.homeData
   )
 
+router
+  .route("/report-problem")
+  .get(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    UserController.woneReportProblem
+  )
+  .post(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    fileUploadHandler(),
+    // validateRequest( UserValidation.createReportRequestZodSchema),
+    UserController.sendReportProblem
+  )
+
 export const UserRoutes = router;
