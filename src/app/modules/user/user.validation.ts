@@ -26,10 +26,21 @@ const createReportRequestZodSchema = z.object({
     description: z.string({required_error: "you must give the description of the report"}),
     image: z.any({required_error: "You must give the image of your problem!"})
   })
+});
+
+const filterDataZodSchema = z.object({
+  body: z.object({
+    userLat: z.number({required_error: "You must give the user lan number"}),
+    userLng: z.number({required_error: "you must give lng number"}),
+    maxDistance: z.number({required_error: "You must give the max distance"}),
+    minPrice: z.number({required_error: "You must give the min price"}),
+    maxPrice: z.number({required_error: "You must give the max price"})
+  })
 })
 
 export const UserValidation = {
   createUserZodSchema,
   updateUserZodSchema,
-  createReportRequestZodSchema
+  createReportRequestZodSchema,
+  filterDataZodSchema
 };

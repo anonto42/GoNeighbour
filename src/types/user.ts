@@ -5,3 +5,11 @@ export type register = {
     email: string;
     password: string;
 }
+
+export type filterType = {
+    userLat: number;
+    userLng: number;
+    maxDistance: number;
+    minPrice: number;
+    maxPrice: number;
+}

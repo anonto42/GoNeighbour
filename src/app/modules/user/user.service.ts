@@ -8,7 +8,7 @@ import unlinkFile from '../../../shared/unlinkFile';
 import generateOTP from '../../../util/generateOTP';
 import { IUser } from './user.interface';
 import { User } from './user.model';
-import { register } from '../../../types/user';
+import { filterType, register } from '../../../types/user';
 import { Post } from '../post/post.model';
 import SearchKeyword from '../keywords/search.model';
 import validator from 'validator';
@@ -273,6 +273,32 @@ const wone_created_suports = async (
   return await Suport.find({user: user._id}).populate("user","name email image").skip(skipCount).limit(option.limit)
 }
 
+const filterdata = async (
+  user: JwtPayload,
+  data: filterType
+) => {
+  const { maxDistance, maxPrice, minPrice, userLat, userLng } = data;
+  const userFromDB = await User.isValidUser(user.id);
+
+  const posts = await Post.find({
+    location:{
+      $nearSphere: {
+        $geometry: {
+          type: "Point",
+          coordinates: [userLng, userLat]
+        },
+        $maxDistance: maxDistance
+      }
+    },
+    amount: {
+      $gte: minPrice,
+      $lte: maxPrice
+    }
+  }).exec();
+
+  return posts;
+}
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
@@ -281,5 +307,6 @@ export const UserService = {
   getTopSearchedKeywords,
   home_data,
   userReport_request,
-  wone_created_suports
+  wone_created_suports,
+  filterdata
 };

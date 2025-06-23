@@ -48,6 +48,14 @@ router
   )
 
 router
+  .route("/filter")
+  .get(
+    auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+    validateRequest( UserValidation.filterDataZodSchema ),
+    UserController.filterData
+  )
+
+router
   .route("/home")
   .get(
     (req: Request, res: Response, next: NextFunction)=>{

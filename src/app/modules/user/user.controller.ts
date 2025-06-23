@@ -97,6 +97,20 @@ const homeData = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const filterData = catchAsync(async (req: Request, res: Response) => {
+  
+  const user = req.user;
+  const { ...data } = req.body;
+  const result = await UserService.filterdata(user,data);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Successfully get filter data',
+    data: result,
+  });
+});
+
 const sendReportProblem = catchAsync(async (req: Request, res: Response) => {
   
   const user = req.user;
@@ -134,5 +148,5 @@ const woneReportProblem = catchAsync(async (req: Request, res: Response) => {
 export const UserController = { 
   createUser, getUserProfile, updateProfile,
   searchData, top10KeyWords, homeData,
-  sendReportProblem, woneReportProblem
+  sendReportProblem, woneReportProblem,filterData
 };
