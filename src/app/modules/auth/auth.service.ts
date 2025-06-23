@@ -18,6 +18,13 @@ import { ResetToken } from '../resetToken/resetToken.model';
 import { User } from '../user/user.model';
 import { STATUS } from '../../../enums/user';
 import ms, { StringValue } from "ms";
+// import * as faceapi from 'face-api.js';
+// import { Canvas, Image, ImageData,loadImage } from 'canvas';
+// import path from 'path';
+// import fs from 'fs';
+// import Tesseract from 'tesseract.js' 
+// import sharp from 'sharp'
+import unlinkFile from '../../../shared/unlinkFile';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -296,6 +303,128 @@ const changePasswordToDB = async (
   await User.findOneAndUpdate({ _id: user.id }, updateData, { new: true });
 };
 
+
+//Config the faceapi
+// faceapi.env.monkeyPatch({
+//   Canvas: Canvas as any,
+//   Image: Image as any,
+//   ImageData: ImageData as any
+// });
+
+// const MODEL_PATH = path.join( process.cwd(), "trained_models");
+
+// async function loadModels() {
+//   await faceapi.nets.ssdMobilenetv1.loadFromDisk(MODEL_PATH);
+//   await faceapi.nets.faceLandmark68Net.loadFromDisk(MODEL_PATH);
+//   await faceapi.nets.faceRecognitionNet.loadFromDisk(MODEL_PATH);
+// };
+
+// loadModels()
+// .then( e => console.log("Models are loaded: ", e ))
+// .catch(console.error)
+
+// const converToFload32Array = (arr:any[])=>{
+//   const temp = []
+//   const tempObj = arr[0]
+//   for(let key in tempObj){
+//     temp.push(tempObj[key])
+//   }
+//   return temp
+// }
+
+
+//Face verification
+// const faceVerification = async (
+//   image1?: string,
+//   image2?: string,
+//   user?: JwtPayload
+// ) => {
+  // try {
+  //   const { id } = user!;
+  //   const userData = await User.isValidUser(id);
+  //   if (userData.faceVerifyed) {
+  //     throw new ApiError(
+  //       StatusCodes.CREATED,
+  //       "You are already verifyed!"
+  //     )
+  //   }
+
+  //   if (!image1 || !image2) {
+  //     throw new ApiError(
+  //       StatusCodes.NOT_FOUND,
+  //       "Images are not founded to calculate!"
+  //     )
+  //   }
+
+  //   if (!fs.existsSync(image1) || !fs.existsSync(image2)) {
+  //     throw new ApiError(StatusCodes.NOT_FOUND, 'Image file not found'); 
+  //   };
+
+  //   const img1 = ( await loadImage(image1) ) as unknown as HTMLImageElement;
+  //   const img2 = ( await loadImage(image2) ) as unknown as HTMLImageElement;
+
+  //   const detection1 = await faceapi.detectSingleFace(img1)
+  //                                   .withFaceLandmarks()
+  //                                   .withFaceDescriptor()
+  //   const detection2 = await faceapi.detectSingleFace(img2)
+  //                                   .withFaceLandmarks()
+  //                                   .withFaceDescriptor()
+                                  
+  //   const descriptor_data_1 = detection1?.descriptor;
+  //   const descriptor_data_2 = detection2?.descriptor;
+
+  //   if (!descriptor_data_1 || !descriptor_data_2) {
+  //     throw new ApiError(StatusCodes.NOT_FOUND, "Face detection data not found!")
+  //   };
+    
+  //   let minDistance = 0.6;
+  //   const faceArr = converToFload32Array(descriptor_data_1 as any)
+  //   const distance = faceapi.euclideanDistance(faceArr, descriptor_data_2)
+
+  //   const match = distance < minDistance
+
+  //   if (match) {
+  //     return true
+  //   }
+
+  //   if (!match) {
+  //     return false
+  //   }
+
+  //   unlinkFile(image1!)
+  //   unlinkFile(image2!)
+
+  //   return match
+
+  // } catch (error) {
+  //   unlinkFile(image1!)
+  //   unlinkFile(image2!)
+  //   throw new Error()
+  // }
+// }
+
+//Face verification
+const faceVerification = async (
+  image1?: string,
+  image2?: string,
+  user?: JwtPayload
+) => {
+  try {
+
+    const userFromDB = await User.isValidUser(user?.id)
+
+    return {
+      image1,
+      image2
+    }
+    
+  } catch (error) {
+    unlinkFile(image1!)
+    unlinkFile(image2!)
+    throw new Error()
+  }
+};
+
 export const AuthService = {
   verifyEmailToDB,
   refreshToken,
@@ -303,4 +432,5 @@ export const AuthService = {
   forgetPasswordToDB,
   resetPasswordToDB,
   changePasswordToDB,
+  faceVerification
 };
