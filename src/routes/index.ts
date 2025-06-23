@@ -6,6 +6,7 @@ import { PostRouter } from '../app/modules/post/post.route';
 import { KeywordhRouter } from '../app/modules/keywords/keyword.route';
 import { ChatRoutes } from '../app/modules/chat/chat.route';
 import { MessageRoutes } from '../app/modules/message/message.route';
+import { BidRoutes } from '../app/modules/bid/bid.route';
 const router = express.Router();
 
 const apiRoutes = [
@@ -36,6 +37,10 @@ const apiRoutes = [
   {
     path: "/message",
     route: MessageRoutes
+  },
+  {
+    path: "/bid",
+    route: BidRoutes
   }
 ];
 
