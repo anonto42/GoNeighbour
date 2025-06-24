@@ -10,11 +10,19 @@ import { PostController } from "./post.controller";
 const router = Router();
 
 router
+    .route("/")
+    .get(
+        auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+        PostController.getWonePosts
+    )
+
+router
     .route("/one/:id")
     .get(
         auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
         PostController.aPost
     )
+
 router
     .route('/upload/do')
     .post(

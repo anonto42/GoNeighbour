@@ -7,16 +7,15 @@ import { Post } from "./post.model";
 import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 
-
 const createPost = async (
     payload: JwtPayload,
     data: postT
 ) => {
     try {
 
-        data.createdBy = new Types.ObjectId( data.createdBy )
-
-        await User.isValidUser(payload.id);
+        const user = await User.isValidUser(payload.id);
+        
+        data.createdBy = new Types.ObjectId( user._id )
 
         const isPostExist = await Post.findOne({title: data.title});
         if (isPostExist) {
@@ -40,7 +39,15 @@ const createPost = async (
             error.message
         )
     }
-}
+};
+
+const woneCreatedPosts = async (
+    payload: JwtPayload
+) => {
+    const user = await User.isValidUser(payload.id);
+    
+    return await Post.find({createdBy: user._id}).lean().exec();
+};
 
 const aPost = async (
     payload: JwtPayload,
@@ -61,7 +68,7 @@ const aPost = async (
     }
 
     return isPostExist
-}
+};
 
 const updatedPost = async (
     payload: JwtPayload,
@@ -97,7 +104,7 @@ const updatedPost = async (
             error.message
         )
     }
-}
+};
 
 const lastPosts = async (
     user: JwtPayload,
@@ -115,7 +122,7 @@ const lastPosts = async (
         .sort({ createdAt: -1 });
 
     return posts;
-}
+};
 
 const addTofavorite = async (
     user: JwtPayload,
@@ -135,7 +142,7 @@ const addTofavorite = async (
     await userO?.save();
 
     return true
-}
+};
 
 const getFavorite = async (
     user: JwtPayload,
@@ -199,7 +206,7 @@ const removeFromFavorite = async (
     user.save();
 
     return true
-}
+};
 
 export const PostService = {
     createPost,
@@ -208,5 +215,6 @@ export const PostService = {
     removeFromFavorite,
     lastPosts,
     addTofavorite,
-    getFavorite
+    getFavorite,
+    woneCreatedPosts
 }

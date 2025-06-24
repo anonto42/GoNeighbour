@@ -147,7 +147,22 @@ const removeFavorites = catchAsync(
   }
 );
 
+const getWonePosts = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    const result = await PostService.woneCreatedPosts(user);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get wone created posts!',
+      data: result,
+    });
+  }
+);
+
 export const PostController = { 
-  createPost,aPost,updateAPost,lastPosts,
-  favorites,addFavorites,removeFavorites
+  createPost,aPost,updateAPost,lastPosts,getWonePosts,
+  favorites,addFavorites,removeFavorites,
 };
