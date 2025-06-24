@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
-import { getMultipleFilesPath, getSingleFilePath } from '../../../shared/getFilePath';
+import { getMultipleFilesPath } from '../../../shared/getFilePath';
 import sendResponse from '../../../shared/sendResponse';
 import { PostService } from './post.service';
 import ApiError from '../../../errors/ApiError';
@@ -150,8 +150,8 @@ const removeFavorites = catchAsync(
 const getWonePosts = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
-
-    const result = await PostService.woneCreatedPosts(user);
+    const data = req.body;
+    const result = await PostService.woneCreatedPosts(user, data.page, data.limit);
 
     sendResponse(res, {
       success: true,

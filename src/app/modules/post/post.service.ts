@@ -42,11 +42,21 @@ const createPost = async (
 };
 
 const woneCreatedPosts = async (
-    payload: JwtPayload
+    payload: JwtPayload, 
+    page: number = 1,  
+    limit: number = 10   
 ) => {
     const user = await User.isValidUser(payload.id);
-    
-    return await Post.find({createdBy: user._id}).lean().exec();
+
+    const skipCount = (page - 1) * limit;
+
+    const posts = await Post.find({ createdBy: user._id })
+        .skip(skipCount)
+        .limit(limit)
+        .lean() 
+        .exec();
+
+    return posts;
 };
 
 const aPost = async (
