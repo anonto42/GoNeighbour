@@ -20,6 +20,40 @@ const sendBid = catchAsync(async (
   });
 });
 
+const bidRequestes = catchAsync(async (
+  req: Request, 
+  res: Response
+) => {
+  const user = req.user
+  const { ...data } = req.body;
+  const result = await BidService.bidRequests(user,data);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Bid requestes",
+    data: result,
+  });
+});
+
+const bidRequestesAsAdvengrar = catchAsync(async (
+  req: Request, 
+  res: Response
+) => {
+  const user = req.user
+  const { ...data } = req.body;
+  const result = await BidService.bidRequesteAsAdvengerer(user,data);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Bid requestes",
+    data: result,
+  });
+});
+
 export const BidController = { 
   sendBid,
+  bidRequestes,
+  bidRequestesAsAdvengrar
 };

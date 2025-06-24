@@ -11,9 +11,23 @@ router
   .route("/")
   .get()
   .post(
-    auth(USER_ROLES.ADMIN, USER_ROLES.USER),
-    validateRequest(BidValidation.defaultZodSchema),
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    validateRequest( BidValidation.defaultZodSchema ),
     BidController.sendBid
   );
+
+router
+  .route("/requests")
+  .get(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    BidController.bidRequestes
+  )
+
+router
+  .route("/requests/adventurer")
+  .get(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    BidController.bidRequestesAsAdvengrar
+  )
 
 export const BidRoutes = router;
