@@ -3,5 +3,5 @@
 export type Bids = {
     amount: number,
     reason: string,
-    postID: string
+    to: string
 }
