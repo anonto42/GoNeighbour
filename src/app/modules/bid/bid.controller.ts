@@ -52,8 +52,25 @@ const bidRequestesAsAdvengrar = catchAsync(async (
   });
 });
 
-export const BidController = { 
+const intrigateWithBid = catchAsync(async (
+  req: Request, 
+  res: Response
+) => {
+  const user = req.user;
+  const { action, bid_id } = req.body;
+  const result = await BidService.intrigateWithBid(user,bid_id,action);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Re Bid sended!",
+    data: result,
+  });
+});
+
+export const BidController = {
   sendBid,
   bidRequestes,
+  intrigateWithBid,
   bidRequestesAsAdvengrar
 };

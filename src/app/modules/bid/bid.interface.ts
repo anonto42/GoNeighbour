@@ -6,8 +6,10 @@ export interface BidI {
     quizeGiver: Types.ObjectId;
     service: Types.ObjectId;
     parent_bid: Types.ObjectId;
-    re_bids: BidI[]
+    createdBy: Types.ObjectId;
+    re_bids: Types.ObjectId[]
     isAccepted_fromAdventurer: BID_STATUS;
     isAccepted_fromQuizeGiver: BID_STATUS;
     offer_ammount: number;
+    reason: string
 }

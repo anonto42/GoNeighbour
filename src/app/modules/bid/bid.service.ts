@@ -1,13 +1,14 @@
 import { StatusCodes } from 'http-status-codes';
 import ApiError from '../../../errors/ApiError';
 import { JwtPayload } from 'jsonwebtoken';
-import { Bids, sendBid } from '../../../types/bid';
+import { Bids } from '../../../types/bid';
 import { User } from '../user/user.model';
 import { Post } from '../post/post.model';
 import { NotificationModel } from '../notification/notification.model';
 import { socketHelper } from '../../../helpers/socketHelper';
 import mongoose from 'mongoose';
 import { Bid } from './bid.model';
+import { Tast } from '../task/task.model';
 
 const sendBid = async (
   payload: JwtPayload,
@@ -30,6 +31,8 @@ const sendBid = async (
     adventurer: sender._id,
     quizeGiver: post.createdBy,
     offer_ammount: post.amount,
+    createdBy: payload.id,
+    reason: data.reason,
     service: post._id
   })
   if (!bid) {
@@ -78,6 +81,7 @@ const bidRequests = async (
   const skipCount = (page - 1) * limit;
 
   const requests = await Bid.find({quizeGiver: user._id})
+                            .populate("re_bids")
                             .skip(skipCount)
                             .limit(limit)
 
@@ -103,8 +107,89 @@ const bidRequesteAsAdvengerer = async (
   return bidCreate
 };
 
+const intrigateWithBid = async (
+  payload: JwtPayload,
+  bidID: string,
+  action: boolean
+) => {
+
+  const objID = new mongoose.Types.ObjectId(bidID);
+  const bid = await Bid.findById(objID);
+  if (!bid) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "BID not founded!"
+    )
+  };
+
+  if (action) {
+
+    const notification = await NotificationModel.create({
+      for: bid.adventurer,
+      from: payload.id,
+      title: `your bit was accepted!`,
+      discription: `${( bid as any ).parent_bid?.reason}`,
+      content: ( bid as any ).parent_bid.title
+    })
+    if (!notification) {
+      throw new ApiError(
+        StatusCodes.NOT_ACCEPTABLE,
+        "Notification not created!"
+      )
+    }
+
+    const targetSocketId = socketHelper.connectedUsers.get((bid as any).parent_bid.createdBy);
+    
+    // @ts-ignore
+    const io = global.io;
+    if (targetSocketId) {
+      io.to(targetSocketId).emit(`socket:notification:${(bid as any).parent_bid.createdBy}`, notification);
+    }
+
+
+    // Have to make a funciton for create the task
+
+
+    const task = await Tast.create({ 
+      customer: bid.quizeGiver,
+      provider: bid.adventurer
+    })
+
+
+
+    
+  } else if (!action) {
+
+    const notification = await NotificationModel.create({
+      for: bid.adventurer,
+      from: payload.id,
+      title: `your bit was Deny!`,
+      discription: `${( bid as any ).parent_bid?.reason}`,
+      content: ( bid as any ).parent_bid.title
+    })
+    if (!notification) {
+      throw new ApiError(
+        StatusCodes.NOT_ACCEPTABLE,
+        "Notification not created!"
+      )
+    }
+
+    const targetSocketId = socketHelper.connectedUsers.get((bid as any).parent_bid.createdBy);
+    
+    // @ts-ignore
+    const io = global.io;
+
+    if (targetSocketId) {
+      io.to(targetSocketId).emit(`socket:notification:${(bid as any).parent_bid.createdBy}`, notification);
+    }    
+  }
+
+
+}
+
 export const BidService = {
   sendBid,
   bidRequests,
+  intrigateWithBid,
   bidRequesteAsAdvengerer
 };

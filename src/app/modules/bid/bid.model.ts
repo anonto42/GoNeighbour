@@ -12,6 +12,10 @@ const bidSchema = new Schema<BidI>({
         type: Schema.Types.ObjectId,
         ref: "user"
     },
+    createdBy:{
+        type: Schema.Types.ObjectId,
+        ref: "user"
+    },
     parent_bid:{
         type: Schema.Types.ObjectId,
         ref: "bid"
@@ -37,6 +41,9 @@ const bidSchema = new Schema<BidI>({
     offer_ammount:{
         type: Number,
         default: 0
+    },
+    reason:{
+        type: String
     }
 },{
     timestamps: true

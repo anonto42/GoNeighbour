@@ -9,7 +9,6 @@ const router = express.Router();
 
 router
   .route("/")
-  .get()
   .post(
     auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
     validateRequest( BidValidation.defaultZodSchema ),
@@ -28,6 +27,14 @@ router
   .get(
     auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
     BidController.bidRequestesAsAdvengrar
+  )
+
+router
+  .route("/intrigate")
+  .post(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    validateRequest( BidValidation.intrigateBidZodSchema),
+    BidController.intrigateWithBid
   )
 
 export const BidRoutes = router;
