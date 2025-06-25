@@ -5,7 +5,3 @@ export type Bids = {
     reason: string,
     postID: string
 }
-
-export type sendBid = {
-    
-}
