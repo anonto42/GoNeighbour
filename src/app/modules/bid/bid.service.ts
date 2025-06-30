@@ -107,6 +107,7 @@ const bidRequesteAsAdvengerer = async (
   return bidCreate
 };
 
+//more work needs for the intrigation
 const intrigateWithBid = async (
   payload: JwtPayload,
   bidID: string,
@@ -138,6 +139,7 @@ const intrigateWithBid = async (
       )
     }
 
+    
     const targetSocketId = socketHelper.connectedUsers.get((bid as any).parent_bid.createdBy);
     
     // @ts-ignore
@@ -148,8 +150,6 @@ const intrigateWithBid = async (
 
 
     // Have to make a funciton for create the task
-
-
     const task = await Tast.create({ 
       customer: bid.quizeGiver,
       provider: bid.adventurer
@@ -185,7 +185,7 @@ const intrigateWithBid = async (
   }
 
 
-}
+};
 
 export const BidService = {
   sendBid,
