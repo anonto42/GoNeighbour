@@ -5,5 +5,6 @@ export interface taskI {
     provider: Types.ObjectId,
     customer: Types.ObjectId,
     isPayed: boolean,
-    transactionId: string
+    transactionId: string,
+    bid: Types.ObjectId
 }

@@ -15,6 +15,10 @@ const taskSchema = new Schema<taskI>({
         type: Schema.Types.ObjectId,
         ref: "post"
     },
+    bid:{
+        type: Schema.Types.ObjectId,
+        ref: "bid"
+    },
     transactionId:{
         type: String
     },
@@ -25,4 +29,4 @@ const taskSchema = new Schema<taskI>({
     timestamps: true
 })
 
-export const Tast = model<taskI>("task", taskSchema);
+export const Task = model<taskI>("task", taskSchema);
