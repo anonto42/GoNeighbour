@@ -2,7 +2,6 @@ import { model, Schema } from "mongoose";
 import { BidI } from "./bid.interface";
 import { BID_STATUS } from "../../../enums/bid";
 
-
 const bidSchema = new Schema<BidI>({
     adventurer:{
         type: Schema.Types.ObjectId,
@@ -16,14 +15,10 @@ const bidSchema = new Schema<BidI>({
         type: Schema.Types.ObjectId,
         ref: "user"
     },
-    parent_bid:{
-        type: Schema.Types.ObjectId,
-        ref: "bid"
+    isPaid:{
+        type: Boolean,
+        default: false
     },
-    re_bids: [{
-        type: Schema.Types.ObjectId,
-        ref:  "bid"
-    }],
     service:{
         type: Schema.Types.ObjectId,
         ref: "post" 
