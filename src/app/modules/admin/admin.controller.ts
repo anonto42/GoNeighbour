@@ -209,10 +209,39 @@ const deleteTask = catchAsync(
   }
 );
 
+const getTransactions = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { ...data } = req.body;
+    const result = await AdminServices.getTransactions(data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get transactions!',
+      data: result,
+    });
+  }
+);
+
+const overview = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+
+    const result = await AdminServices.overview();
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get overview!',
+      data: result,
+    });
+  }
+);
+
 export const AdminController = { 
     PostAboutUs,GetAboutUsData,UpdateAboutUsData,
     GetConditionsData,CreateConditionsData,UpdateConditionsData,
     GetFAQData,CreateFAQData,UpdateFAQData,
     usersGet,blockAUser,getAUserdata,
-    getAlTaskdata,deleteTask
+    getAlTaskdata,deleteTask,getTransactions,
+    overview
 };

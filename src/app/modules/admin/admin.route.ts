@@ -90,4 +90,18 @@ router
     AdminController.deleteTask
   )
 
+router
+  .route("/transactions")
+  .get(
+    auth( USER_ROLES.ADMIN ),
+    AdminController.getTransactions
+  )
+
+router
+  .route("/overview")
+  .get(
+    auth( USER_ROLES.ADMIN ),
+    AdminController.overview
+  )
+  
 export const AdminRouter = router;

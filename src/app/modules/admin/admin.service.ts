@@ -7,7 +7,8 @@ import { Policie } from '../policies/policie.model';
 import { policie_type } from '../../../enums/policie';
 import { STATUS } from '../../../enums/user';
 import { Task } from '../task/task.model';
-
+import { Payment } from '../payments/payment.model';
+import { Bid } from '../bid/bid.model';
 const create_about_us = async (
     // payload: Partial<register>
     payload: JwtPayload,
@@ -299,12 +300,216 @@ const deleteTask = async (
   
     return task;
 };
-  
 
+const getTransactions = async (
+    data: { page: number; limit: number; },
+): Promise<any> => {
+    
+    const { page = 1, limit = 10 } = data;
+    
+    const skipCount = (page - 1) * limit;
+    
+    const transactions = await Payment.find()
+                                        .populate({
+                                            path: 'taskID',
+                                            populate: [
+                                                { path: 'customer', select: 'name email image' },
+                                                { path: 'provider', select: 'name email image' },
+                                                { path: 'service', select: 'title description amount' },
+                                                { path: 'bid', select: 'offer_ammount reason' }
+                                            ]
+                                        })
+                                        .skip(skipCount)
+                                        .limit(limit)
+                                        .sort({ createdAt: -1 });
+
+    if (!transactions) {
+        throw new ApiError(
+            StatusCodes.NOT_ACCEPTABLE,
+            "Your transactions data was not exist!"
+        )
+    };
+
+    return transactions;
+};
+
+const overview = async () => {
+
+    // Total User Count
+    const totalUser = await User.find().countDocuments();
+  
+    // Total Job Request (Offer Count)
+    const totalJobRequest = await Bid.find().countDocuments();
+  
+    // Total Job Post (Task Count)
+    const totalTask = await Task.find().countDocuments();
+  
+    // Total Commission Aggregation for Successful Payments
+    const totalCommission = await Payment.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalCommission: { $sum: "$commission" },
+        },
+      },
+    ]);
+    const commissionSum = totalCommission[0]?.totalCommission || 0;
+  
+    // Current Year
+    const currentYear = new Date().getFullYear();
+  
+    // Yearly Revenue Data: Grouped by Month
+    const result = await Payment.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(`${currentYear}-01-01`),
+            $lt: new Date(`${currentYear + 1}-01-01`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          totalCommission: { $sum: "$commission" },
+        },
+      },
+    ]);
+  
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+  
+    // Format the result to map month to total commission
+    const commissionMap = new Map<number, number>();
+    result.forEach((entry) => {
+      commissionMap.set(entry._id, entry.totalCommission);
+    });
+  
+    const formattedRevenueData = months.map((monthName, index) => ({
+      month: monthName,
+      commission: commissionMap.get(index + 1) || 0,
+    }));
+  
+    // User Growth Data: Grouped by Month and Role
+    const userGrowthData = await User.aggregate([
+      {
+        $project: {
+          role: 1,
+          month: { $month: "$createdAt" },  // Extract month directly
+          year: { $year: "$createdAt" },   // Extract year directly
+        },
+      },
+      {
+        $match: { "year": currentYear },  // Filter for the current year
+      },
+      {
+        $group: {
+          _id: { month: "$month", role: "$role" },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: "$_id.month",
+          roles: {
+            $push: { role: "$_id.role", count: "$count" },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          month: "$_id",
+          serviceProvider: {
+            $let: {
+              vars: {
+                sp: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$roles",
+                        as: "item",
+                        cond: { $eq: ["$$item.role", "serviceProvider"] },
+                      },
+                    },
+                    0,
+                  ],
+                },
+              },
+              in: { $ifNull: ["$$sp.count", 0] },
+            },
+          },
+          categoryUser: {
+            $let: {
+              vars: {
+                cu: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$roles",
+                        as: "item",
+                        cond: { $eq: ["$$item.role", "categoryUser"] },
+                      },
+                    },
+                    0,
+                  ],
+                },
+              },
+              in: { $ifNull: ["$$cu.count", 0] },
+            },
+          },
+        },
+      },
+      { $sort: { month: 1 } }, // Sort by month
+    ]);
+  
+    // Initialize an empty map to hold user growth data by month
+    const userGrowthMap = new Map<number, { serviceProvider: number, categoryUser: number }>();
+  
+    // Process the raw data to accumulate user growth by month
+    userGrowthData.forEach(entry => {
+      const monthIndex = entry.month - 1; // Map month (1-12) to (0-11)
+      if (!userGrowthMap.has(monthIndex)) {
+        userGrowthMap.set(monthIndex, { serviceProvider: 0, categoryUser: 0 });
+      }
+      
+      const currentData = userGrowthMap.get(monthIndex);
+      if (currentData) {
+        currentData.serviceProvider += entry.serviceProvider;
+        currentData.categoryUser += entry.categoryUser;
+      }
+    });
+  
+    // Ensure that every month has a value, even if it's 0
+    const formattedUserGrowthData = months.map((monthName, index) => {
+      const growth = userGrowthMap.get(index) || { serviceProvider: 0, categoryUser: 0 };
+      return {
+        month: monthName,
+        serviceProvider: growth.serviceProvider,
+        categoryUser: growth.categoryUser,
+      };
+    });
+  
+    // Return the Summary Data
+    return {
+      totalTask,
+      totalJobRequest,
+      totalUser,
+      totalRevenue: commissionSum,
+      yearlyRevenueData: formattedRevenueData,
+      userGrowth: formattedUserGrowthData,
+    };
+  };
+  
+  
 export const AdminServices = {
   create_about_us,get_about_us,update_about_us,
   get_condition_data,create_conditon,update_condition,
   get_faq_data,create_faq,update_faq,
   getAllUsers,blockAUser,getAUser,
-  getAllTaskdata,deleteTask
+  getAllTaskdata,deleteTask,
+  getTransactions,
+  overview
 };
