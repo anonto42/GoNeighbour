@@ -63,7 +63,7 @@ const intrigateWithBid = catchAsync(async (
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: "Re Bid sended!",
+    message: "Bid intrigated!",
     data: result,
   });
 });
