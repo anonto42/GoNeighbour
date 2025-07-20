@@ -79,4 +79,15 @@ router
     AdminController.getAUserdata
   )
 
+router
+  .route("/tasks")
+  .get(
+    auth( USER_ROLES.ADMIN ),
+    AdminController.getAlTaskdata
+  )
+  .delete(
+    auth( USER_ROLES.ADMIN ),
+    AdminController.deleteTask
+  )
+
 export const AdminRouter = router;

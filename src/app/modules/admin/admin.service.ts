@@ -6,6 +6,7 @@ import { User } from '../user/user.model';
 import { Policie } from '../policies/policie.model';
 import { policie_type } from '../../../enums/policie';
 import { STATUS } from '../../../enums/user';
+import { Task } from '../task/task.model';
 
 const create_about_us = async (
     // payload: Partial<register>
@@ -251,9 +252,59 @@ const getAUser = async (
     return user;
 };
 
+const getAllTaskdata = async (
+    data: { 
+        limit: number; 
+        page: number;
+    }
+) => {
+
+    const skipCount = (data.page - 1) * data.limit;
+
+    const taskts = await Task.find()
+                             .populate({
+                                path: 'provider',
+                                select: '-authentication -password -createdAt -updatedAt -__v -searchKeywords -favorites -faceVerifyed',
+                             })
+                             .populate({
+                                path: 'customer',
+                                select: '-authentication -password -createdAt -updatedAt -__v -searchKeywords -favorites -faceVerifyed',
+                             })
+                             .populate({
+                                path: 'service',
+                                select: '-location',
+                             })
+                             .populate({
+                                path: 'bid',
+                                select: '-authentication -password -createdAt -updatedAt -__v -searchKeywords -favorites -faceVerifyed',
+                             })
+                             .skip(skipCount)
+                             .limit(data.limit)
+                             .sort({ createdAt: -1 });
+
+    return taskts;
+};
+
+const deleteTask = async (
+    id: string
+  ) => {
+    const task = await Task.findByIdAndDelete(id);
+  
+    if (!task) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        "Task not found!"
+      )
+    }
+  
+    return task;
+};
+  
+
 export const AdminServices = {
   create_about_us,get_about_us,update_about_us,
   get_condition_data,create_conditon,update_condition,
   get_faq_data,create_faq,update_faq,
-  getAllUsers,blockAUser,getAUser
+  getAllUsers,blockAUser,getAUser,
+  getAllTaskdata,deleteTask
 };

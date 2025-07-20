@@ -179,9 +179,40 @@ const getAUserdata = catchAsync(
   }
 );
 
+const getAlTaskdata = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    
+    const { ...data } = req.body;
+
+    const result = await AdminServices.getAllTaskdata(data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully all task data',
+      data: result,
+    });
+  }
+);
+
+const deleteTask = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const taskID = req.query.id as string;
+    const result = await AdminServices.deleteTask(taskID);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully delete task!',
+      data: result,
+    });
+  }
+);
+
 export const AdminController = { 
     PostAboutUs,GetAboutUsData,UpdateAboutUsData,
     GetConditionsData,CreateConditionsData,UpdateConditionsData,
     GetFAQData,CreateFAQData,UpdateFAQData,
-    usersGet,blockAUser,getAUserdata
+    usersGet,blockAUser,getAUserdata,
+    getAlTaskdata,deleteTask
 };
