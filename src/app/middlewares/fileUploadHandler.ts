@@ -25,13 +25,19 @@ const fileUploadHandler = () => {
       let uploadDir;
       switch (file.fieldname) {
         case 'image1':
-          uploadDir = path.join(baseUploadDir, 'image');
+          uploadDir = path.join(baseUploadDir, 'image1');
           break;
         case 'image':
           uploadDir = path.join(baseUploadDir, 'image');
           break;
         case 'image2':
-          uploadDir = path.join(baseUploadDir, 'image');
+          uploadDir = path.join(baseUploadDir, 'image2');
+          break;
+        case 'FaceImage':
+          uploadDir = path.join(baseUploadDir, 'FaceImage');
+          break;
+        case 'NIDImage':
+          uploadDir = path.join(baseUploadDir, 'NIDImage');
           break;
         case 'media':
           uploadDir = path.join(baseUploadDir, 'media');
@@ -61,7 +67,37 @@ const fileUploadHandler = () => {
 
   //file filter
   const filterFilter = (req: Request, file: any, cb: FileFilterCallback) => {
-    if (file.fieldname === 'image') {
+    if (file.fieldname === 'NIDImage') {
+      if (
+        file.mimetype === 'image/jpeg' ||
+        file.mimetype === 'image/png' ||
+        file.mimetype === 'image/jpg'
+      ) {
+        cb(null, true);
+      } else {
+        cb(
+          new ApiError(
+            StatusCodes.BAD_REQUEST,
+            'Only .jpeg, .png, .jpg file supported'
+          )
+        );
+      }
+    } else if (file.fieldname === 'FaceImage') {
+      if (
+        file.mimetype === 'image/jpeg' ||
+        file.mimetype === 'image/png' ||
+        file.mimetype === 'image/jpg'
+      ) {
+        cb(null, true);
+      } else {
+        cb(
+          new ApiError(
+            StatusCodes.BAD_REQUEST,
+            'Only .jpeg, .png, .jpg file supported'
+          )
+        );
+      }
+    } else if (file.fieldname === 'image') {
       if (
         file.mimetype === 'image/jpeg' ||
         file.mimetype === 'image/png' ||
@@ -135,6 +171,8 @@ const fileUploadHandler = () => {
     { name: 'image', maxCount: 1 },
     { name: 'image1', maxCount: 1 },
     { name: 'image2', maxCount: 1 },
+    { name: 'FaceImage', maxCount: 1 },
+    { name: 'NIDImage', maxCount: 1 },
     { name: 'media', maxCount: 3 },
     { name: 'doc', maxCount: 3 },
   ]);
