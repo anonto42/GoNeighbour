@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { StatusCodes } from 'http-status-codes';
-import { model, Schema } from 'mongoose';
+import mongoose, { model, Schema } from 'mongoose';
 import { STATUS, USER_ROLES } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
 import { IUser, UserModal } from './user.interface';
@@ -117,8 +117,10 @@ userSchema.statics.isMatchPassword = async (
 
 //Check user With validation in shourt and return the user
 userSchema.statics.isValidUser = async (id: string) => {
+
+  const objID = new mongoose.Types.ObjectId(id);
   const isExist = await User  
-                        .findById( id)
+                        .findById( objID)
                         .select("-password -authentication -__v -updatedAt -createdAt")
                         .lean()
                         .exec();
