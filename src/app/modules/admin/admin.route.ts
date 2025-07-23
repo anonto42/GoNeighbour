@@ -38,7 +38,7 @@ router
   .patch(
     auth( USER_ROLES.ADMIN ),
     validateRequest( AdminValidation.createAbouUsZodSchema ),
-    AdminController.UpdateAboutUsData
+    AdminController.UpdateConditionsData
   )
 
 router
@@ -49,12 +49,12 @@ router
   )
   .post(
     auth( USER_ROLES.ADMIN ),
-    validateRequest( AdminValidation.createAbouUsZodSchema ),
+    validateRequest( AdminValidation.createFAQZodSchema ),
     AdminController.CreateFAQData
   )
   .patch(
     auth( USER_ROLES.ADMIN ),
-    validateRequest( AdminValidation.createAbouUsZodSchema ),
+    validateRequest( AdminValidation.updateFAQZodSchema ),
     AdminController.UpdateFAQData
   )
 

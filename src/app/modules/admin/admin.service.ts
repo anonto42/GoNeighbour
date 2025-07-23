@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
 import ApiError from '../../../errors/ApiError';
-import { about_us } from '../../../types/admin';
+import { about_us, faq, update_faq } from '../../../types/admin';
 import { User } from '../user/user.model';
 import { Policie } from '../policies/policie.model';
 import { policie_type } from '../../../enums/policie';
@@ -9,6 +9,7 @@ import { STATUS } from '../../../enums/user';
 import { Task } from '../task/task.model';
 import { Payment } from '../payments/payment.model';
 import { Bid } from '../bid/bid.model';
+import { Faq } from '../faq/faq.modal';
 const create_about_us = async (
     // payload: Partial<register>
     payload: JwtPayload,
@@ -68,7 +69,7 @@ const update_about_us = async (
     isAboutUsExist.context = data.data;
     await isAboutUsExist.save();
 
-    return
+    return isAboutUsExist;
 };
 
 const get_condition_data = async (
@@ -118,7 +119,7 @@ const update_condition = async (
     
     await User.isValidUser(payload.id);
     
-    const isAboutUsExist = await Policie.findOne({type: policie_type.ABOUT_US});
+    const isAboutUsExist = await Policie.findOne({type: policie_type.TERMS_CONDITIONS});
     if (!isAboutUsExist) {
         throw new ApiError(
             StatusCodes.NOT_ACCEPTABLE,
@@ -129,7 +130,7 @@ const update_condition = async (
     isAboutUsExist.context = data.data
     await isAboutUsExist.save();
 
-    return
+    return isAboutUsExist;
 };
 
 const get_faq_data = async (
@@ -138,7 +139,7 @@ const get_faq_data = async (
     
     await User.isValidUser(payload.id)
     
-    const isAboutUsExist = await Policie.findOne({type: policie_type.FAQ});
+    const isAboutUsExist = await Faq.find();
     if (!isAboutUsExist) {
         throw new ApiError(
             StatusCodes.NOT_ACCEPTABLE,
@@ -151,22 +152,22 @@ const get_faq_data = async (
 
 const create_faq = async (
     payload: JwtPayload,
-    data : about_us
+    data : faq
 ): Promise<any> => {
     
     await User.isValidUser(payload.id)
     
-    const isAboutUsExist = await Policie.findOne({type: policie_type.FAQ});
+    const isAboutUsExist = await Faq.findOne({question: data.question});
     if (isAboutUsExist) {
-        throw new ApiError(
-            StatusCodes.NOT_ACCEPTABLE,
-            "Already another faq data was exist you must delete the older one to create a new one or you can update the older one!"
-        )
+      throw new ApiError(
+          StatusCodes.NOT_ACCEPTABLE,
+          "Already another faq was exist on this name!"
+      )
     };
 
-    const newPoliciData = await Policie.create({
-        context: data.data,
-        type: policie_type.FAQ
+    const newPoliciData = await Faq.create({
+      question: data.question,
+      answer: data.answer
     });
 
     return newPoliciData;
@@ -174,12 +175,12 @@ const create_faq = async (
 
 const update_faq = async (
     payload: JwtPayload,
-    data : about_us
+    data : update_faq
 ): Promise<any> => {
     
     await User.isValidUser(payload.id);
     
-    const isAboutUsExist = await Policie.findOne({type: policie_type.FAQ});
+    const isAboutUsExist = await Faq.findOne({ _id: data.faqId });
     if (!isAboutUsExist) {
         throw new ApiError(
             StatusCodes.NOT_ACCEPTABLE,
@@ -187,10 +188,11 @@ const update_faq = async (
         )
     };
 
-    isAboutUsExist.context = data.data
+    isAboutUsExist.question = data.question;
+    isAboutUsExist.answer = data.answer;
     await isAboutUsExist.save()
 
-    return
+    return isAboutUsExist;
 };
 
 const getAllUsers = async (
@@ -501,7 +503,7 @@ const overview = async () => {
       yearlyRevenueData: formattedRevenueData,
       userGrowth: formattedUserGrowthData,
     };
-  };
+};
   
   
 export const AdminServices = {
