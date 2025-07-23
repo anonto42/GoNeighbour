@@ -20,7 +20,9 @@ const faceVerificationController = catchAsync(async (
     ...verifyData
   }
 
-  const result = await ValidationService.faceVerificationService(data);
+  const user = req.user;
+
+  const result = await ValidationService.faceVerificationService(user,data);
 
   sendResponse(res, {
     success: true,
