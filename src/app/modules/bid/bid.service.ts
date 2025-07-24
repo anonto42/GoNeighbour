@@ -17,6 +17,13 @@ const sendBid = async (
 ) => {
   const { id } = payload;
   const sender = await User.isValidUser(id);
+
+  if (!sender.faceVerifyed) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Please verify your identity with nid to send a bid!"
+    )
+  }
   
   const objID = new mongoose.Types.ObjectId(data.postID);
  
@@ -127,6 +134,14 @@ const intrigateWithBid = async (
   bidID: string,
   action: boolean
 ) => {
+
+  const user = await User.isValidUser(payload.id);
+  if (!user.faceVerifyed) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Please verify your identity with nid to intrigate with a bid!"
+    )
+  }
 
   const objID = new mongoose.Types.ObjectId(bidID);
   const bid = await Bid.findById(objID);
