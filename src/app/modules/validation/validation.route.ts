@@ -8,12 +8,22 @@ import fileUploadHandler from '../../middlewares/fileUploadHandler';
 
 const router = express.Router();
 
-router.post(
-  '/face-verification',
-  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
-  validateRequest(ValidationValidation.FaceValidationZodSchema),
-  fileUploadHandler(),
-  ValidationController.faceVerificationController
+router
+  .route("/azure")
+  .post(
+    auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+    validateRequest(ValidationValidation.FaceValidationZodSchema),
+    fileUploadHandler(),
+    ValidationController.faceVerificationController
+);
+
+router
+  .route("/python")
+  .post(
+    auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+    validateRequest(ValidationValidation.FaceValidationZodSchema),
+    fileUploadHandler(),
+    ValidationController.pythonFaceVerificationController
 );
 
 export const ValidationRoutes = router;
