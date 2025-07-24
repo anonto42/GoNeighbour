@@ -56,3 +56,9 @@ pids/
 # Static data
 /uploads
 /data
+
+# __pycache__
+__pycache__
+
+# temp images
+temp_images
