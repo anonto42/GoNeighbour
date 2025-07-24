@@ -48,29 +48,6 @@ services:
           cpus: '0.25'
           memory: 256M
 
-  python:
-    build:
-      context: .
-      dockerfile: ./Docker/Dockerfile.python
-    container_name: python
-    hostname: python
-    env_file:
-      - .env
-    volumes:
-      - shared-data:/shared
-    networks:
-      - server-net
-    depends_on:
-      - mongo
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M 
-        reservations:
-          cpus: '0.25'
-          memory: 256M 
-
   application:
     build:
       context: .
