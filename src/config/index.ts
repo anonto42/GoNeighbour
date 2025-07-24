@@ -10,6 +10,7 @@ export default {
   databse_user_password: process.env.MONGODB_ADMINPASSWORD,
   node_env: process.env.NODE_ENV,
   port: process.env.PORT,
+  python_port: process.env.PYTHON_PORT,
   bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS,
   jwt: {
     jwt_secret: process.env.JWT_SECRET,
