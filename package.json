@@ -18,6 +18,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@azure/cognitiveservices-face": "^5.0.0",
+    "@azure/ms-rest-azure-js": "^2.1.0",
+    "axios": "^1.11.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "colors": "^1.4.0",
