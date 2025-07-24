@@ -7,6 +7,7 @@ import { KeywordhRouter } from '../app/modules/keywords/keyword.route';
 import { ChatRoutes } from '../app/modules/chat/chat.route';
 import { MessageRoutes } from '../app/modules/message/message.route';
 import { BidRoutes } from '../app/modules/bid/bid.route';
+import { ValidationRoutes } from '../app/modules/validation/validation.route';
 
 const router = express.Router();
 
@@ -42,6 +43,10 @@ const apiRoutes = [
   {
     path: "/bid",
     route: BidRoutes
+  },
+  {
+    path: "/validation",
+    route: ValidationRoutes
   }
 ];
 
