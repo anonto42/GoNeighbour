@@ -14,6 +14,13 @@ const createPost = async (
     try {
 
         const user = await User.isValidUser(payload.id);
+
+        if (!user.faceVerifyed) {
+            throw new ApiError(
+                StatusCodes.BAD_REQUEST,
+                "Please verify your identity with nid to create a post!"
+            )
+        }
         
         data.createdBy = new Types.ObjectId( user._id )
 
