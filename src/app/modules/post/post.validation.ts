@@ -25,7 +25,7 @@ const updatePostZodSchema = z.object({
     deadline: z.string().optional(),
     location: z.any().optional(),
     lat: z.any().optional(),
-    lan: z.any().optional(),
+    lon: z.any().optional(),
     image: z.any().optional()
   })
 });
