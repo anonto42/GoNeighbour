@@ -32,6 +32,16 @@ const userSchema = new Schema<IUser, UserModal>(
       type: Boolean,
       default: false
     },
+    paymentValidation:{
+      accountID: {
+        type: String,
+        default: ""
+      },
+      accountCreated: {
+        type: Boolean,
+        default: false
+      }
+    },
     password: {
       type: String,
       required: true,

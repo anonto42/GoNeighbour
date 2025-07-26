@@ -15,6 +15,10 @@ export type IUser = {
   verified: boolean;
   favorites: Types.ObjectId[];
   searchKeywords: string[];
+  paymentValidation: {
+    accountID: string;
+    accountCreated: boolean;
+  };
   reviews: [
     {
       star: number,
