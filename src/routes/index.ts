@@ -8,6 +8,7 @@ import { ChatRoutes } from '../app/modules/chat/chat.route';
 import { MessageRoutes } from '../app/modules/message/message.route';
 import { BidRoutes } from '../app/modules/bid/bid.route';
 import { ValidationRoutes } from '../app/modules/validation/validation.route';
+import { PaymentRouter } from '../app/modules/payments/pyment.route';
 
 const router = express.Router();
 
@@ -47,6 +48,10 @@ const apiRoutes = [
   {
     path: "/validation",
     route: ValidationRoutes
+  },
+  {
+    path: "/payment",
+    route: PaymentRouter
   }
 ];
 
