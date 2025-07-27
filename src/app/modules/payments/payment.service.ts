@@ -157,11 +157,45 @@ const successDeposit = async (
     return amount;
 };
 
+const createWithdrawSession = async (
+  payload: JwtPayload,
+  data: any
+) => {
+  const objID = new Types.ObjectId(payload.id);
+  const user = await User.findById(objID);
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "User was not found!");
+  }
+  if (!user.paymentValidation.accountCreated || !user.paymentValidation.accountID) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User has not created a connection account at first you must add you bank account!");
+  }
+  
+  const { amount } = data;
 
+  if (user.balance < amount) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User has not enough balance!");
+  }
+
+  const amountInCents = amount * 100;
+  const feeInCents = amountInCents * 0.05;
+  const amountAfterFeeInCents = amountInCents - feeInCents;
+  
+  const transfer = await stripe.transfers.create({
+      amount: amountAfterFeeInCents,
+      currency: 'usd',
+      destination: user.paymentValidation.accountID,
+  });
+
+  user.balance -= amount;
+  await user.save();
+
+  return "successfull";
+};
 
 export const PaymentService = {
     createConnectionAccount,
     createCheckoutSession,
     transferToConnectedAccount,
-    successDeposit
+    successDeposit,
+    createWithdrawSession
 };
