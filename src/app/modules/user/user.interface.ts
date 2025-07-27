@@ -15,6 +15,9 @@ export type IUser = {
   verified: boolean;
   favorites: Types.ObjectId[];
   searchKeywords: string[];
+  balance: number;
+  firstWithdrawal: boolean;
+  lastSession: string;
   paymentValidation: {
     accountID: string;
     accountCreated: boolean;

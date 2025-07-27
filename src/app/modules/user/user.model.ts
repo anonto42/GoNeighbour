@@ -42,6 +42,18 @@ const userSchema = new Schema<IUser, UserModal>(
         default: false
       }
     },
+    balance: {
+      type: Number,
+      default: 0
+    },
+    lastSession: {
+      type: String,
+      default: ""
+    },
+    firstWithdrawal: {
+      type: Boolean,
+      default: false
+    },
     password: {
       type: String,
       required: true,
