@@ -12,19 +12,10 @@ const createPost = catchAsync(
     const user = req.user;
 
     const images = getMultipleFilesPath(req.files,"image")
-
-    // const modified_location = {
-    //     inText: userData.location,
-    //     geoJSON: {
-    //         type: "Point",
-    //         coordinates: [userData.lon, userData.lat]
-    //     }
-    // };
-    // userData.location = modified_location;
-
+    
     const data = {
-        images,
-        ...userData
+      images,
+      ...userData
     }
 
     const result = await PostService.createPost(user,data);
