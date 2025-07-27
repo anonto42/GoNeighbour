@@ -33,15 +33,20 @@ const sendBid = async (
       StatusCodes.NOT_FOUND,
       "Post was not found!"
     )
-  }
+  };
+
+  const adventurer = post.createdBy != sender._id ? sender._id : post.createdBy;
+  const quizeGiver = post.createdBy == sender._id ? sender._id : post.createdBy;
 
   const bid = await Bid.create({
-    adventurer: sender._id,
-    quizeGiver: post.createdBy,
+    adventurer: adventurer,
+    quizeGiver: quizeGiver,
     offer_ammount: post.amount,
     createdBy: payload.id,
     reason: data.reason,
-    service: post._id
+    service: post._id,
+    isAccepted_fromAdventurer: adventurer != id ? BID_STATUS.WATING : BID_STATUS.ACCEPTED,
+    isAccepted_fromQuizeGiver: quizeGiver != id ? BID_STATUS.WATING : BID_STATUS.ACCEPTED
   })
   if (!bid) {
     throw new ApiError(
@@ -90,19 +95,19 @@ const bidRequests = async (
   const requests = await Bid.find({ quizeGiver: user._id })
   .populate({
     path: 'service',
-    select: '-authentication -password -createdAt -updatedAt -__v -searchKeywords -favorites -faceVerifyed',
+    select: ' _id title amount',
   })
   .populate({
     path: 'createdBy',
-    select: '-authentication -password -createdAt -updatedAt -__v -searchKeywords -favorites -faceVerifyed',
+    select: ' _id name email image',
   })
   .populate({
     path: 'adventurer',
-    select: '-authentication -password -createdAt -updatedAt -__v -searchKeywords -favorites -faceVerifyed',
+    select: ' _id name email image',
   })
   .populate({
     path: 'quizeGiver',
-    select: '-authentication -password -createdAt -updatedAt -__v -searchKeywords -favorites -faceVerifyed',
+    select: ' _id name email image',
   })
   .skip(skipCount)
   .limit(limit);
@@ -123,6 +128,22 @@ const bidRequesteAsAdvengerer = async (
   const skipCount = (page - 1) * limit;
 
   const bidCreate = await Bid.find({adventurer: user._id})
+                              .populate({
+                                path: 'service',
+                                select: ' _id title amount',
+                              })
+                              .populate({
+                                path: 'createdBy',
+                                select: ' _id name email image',
+                              })
+                              .populate({
+                                path: 'adventurer',
+                                select: ' _id name email image',
+                              })
+                              .populate({
+                                path: 'quizeGiver',
+                                select: ' _id name email image',
+                              })
                              .skip(skipCount)
                              .limit(limit)
 
@@ -194,7 +215,7 @@ const intrigateWithBid = async (
         bid: bid._id
       })
 
-      return "Task created successfully!"
+      return true
     }
 
     return true;
@@ -230,14 +251,74 @@ const intrigateWithBid = async (
     if (targetSocketId) {
       io.to(targetSocketId).emit(`socket:notification:${bid.createdBy.toString()}`, notification);
     }    
+
+    return true;
   }
 
 
 };
+
+const paytheBid = async (
+  payload: JwtPayload,
+  bidID: string
+) => {
+
+  const objID = new mongoose.Types.ObjectId(bidID);
+  const bid = await Bid.findById(objID);
+  if (!bid) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "BID not founded!"
+    )
+  }
+
+  const userObjId = new mongoose.Types.ObjectId(payload.id);
+  const user = await User.findById(userObjId);
+  if (!user) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "User not founded!"
+    )
+  }
+
+  const adventurerObjId = new mongoose.Types.ObjectId(bid.adventurer);
+  const adventurer = await User.findById(adventurerObjId);
+  if (!adventurer) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "Adventurer not founded!"
+    )
+  }
+
+  if( bid.quizeGiver.toString() != user._id.toString() ) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "You are not the quizeGiver!"
+    )
+  }
+
+  if (user.balance < bid.offer_ammount) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "You don't have enough balance to pay the adventurer! at first add balance to your account!"
+    )
+  }
+
+  user.balance -= bid.offer_ammount;
+  adventurer.balance += bid.offer_ammount;
+  bid.isPaid = true;
+  
+  await bid.save();
+  await user.save();
+  await adventurer.save();
+
+  return true;
+}
 
 export const BidService = {
   sendBid,
   bidRequests,
   intrigateWithBid,
   bidRequesteAsAdvengerer,
+  paytheBid
 };

@@ -15,7 +15,14 @@ const intrigateBidZodSchema = z.object({
   }),
 });
 
+const payBidZodSchema = z.object({
+  body: z.object({
+    bid_id: z.string({required_error: "You must give the id that you want to pay!"})
+  }),
+});
+
 export const BidValidation = {
   defaultZodSchema,
-  intrigateBidZodSchema
+  intrigateBidZodSchema,
+  payBidZodSchema
 };

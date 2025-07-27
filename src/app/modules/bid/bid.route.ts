@@ -37,4 +37,12 @@ router
     BidController.intrigateWithBid
   )
 
+router
+  .route("/pay")
+  .post(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    validateRequest( BidValidation.payBidZodSchema),
+    BidController.paytheBid
+  )
+
 export const BidRoutes = router;

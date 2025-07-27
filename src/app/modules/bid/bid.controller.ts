@@ -68,9 +68,26 @@ const intrigateWithBid = catchAsync(async (
   });
 });
 
+const paytheBid = catchAsync(async (
+  req: Request, 
+  res: Response
+) => {
+  const user = req.user;
+  const { bid_id } = req.body;
+  const result = await BidService.paytheBid(user,bid_id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Payed to the adventurer!",
+    data: result,
+  });
+});
+
 export const BidController = {
   sendBid,
   bidRequestes,
   intrigateWithBid,
-  bidRequestesAsAdvengrar
+  bidRequestesAsAdvengrar,
+  paytheBid
 };
