@@ -4,6 +4,7 @@ import { User } from '../user/user.model';
 import ApiError from '../../../errors/ApiError';
 import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
+import { Request, Response } from 'express';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-04-30.basil',
@@ -58,39 +59,6 @@ const createConnectionAccount = async (payload: JwtPayload,protocol:string,host:
       onboardingUrl: accountLink.url,
     };
 };
-  
-const createCheckoutSession = async (
-//   amount: number,
-//   currency: string,
-//   successUrl: string,
-//   cancelUrl: string
-
-    payload: JwtPayload,
-    bidID: string
-) => {
-//   const session = await stripe.checkout.sessions.create({
-//     payment_method_types: ['card'],
-//     mode: 'payment', // one-time payment
-//     line_items: [
-//       {
-//         price_data: {
-//           currency: "usd",
-//           product_data: {
-//             name: 'Sample Product or Service',
-//           },
-//           unit_amount: amount, // in cents
-//         },
-//         quantity: 1,
-//       },
-//     ],
-//     success_url: successUrl + '?session_id={CHECKOUT_SESSION_ID}',
-//     cancel_url: cancelUrl,
-//   });
-
-//   return {
-//     checkoutUrl: session.url,
-//   };
-};
 
 const transferToConnectedAccount = async (
     amount: number,
@@ -105,12 +73,95 @@ const transferToConnectedAccount = async (
   
     return transfer;
 };
-  
+
+const createCheckoutSession = async (
+    payload: JwtPayload,
+    data: any,
+    request: Request
+) => {
+    const objID = new Types.ObjectId(payload.id);
+    const user = await User.findById(objID);
+    if (!user) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "User was not found!");
+    }
+    
+    const { amount } = data;
+
+    const amountInCents = amount * 100; 
+
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        line_items: [
+            {
+                price_data: {
+                    currency: "usd",
+                    product_data: {
+                        name: 'Sample Product or Service',
+                    },
+                    unit_amount: amountInCents,
+                },
+                quantity: 1,
+            },
+        ],
+        success_url: `${request.protocol}://${request.get('host')}/api/v1/payment/deposit/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${request.protocol}://${request.get('host')}/api/v1/payment/deposit`,
+        metadata: {
+            user_id: user._id.toString(),
+            amount: amount,
+        }
+    });
+
+    const sessionID = session.id;
+
+    user.lastSession = sessionID;
+    await user.save();
+
+    return {
+        checkoutUrl: session.url,
+    };
+};
+
+const successDeposit = async (
+    req: Request,
+    res: Response,
+) => {
+    const { session_id } = req.query;
+    if (!session_id) throw new ApiError(StatusCodes.BAD_REQUEST, "Session ID is required!");
+
+    const session = await stripe.checkout.sessions.retrieve(session_id as string);
+    if (!session) throw new ApiError(StatusCodes.NOT_FOUND, "Session was not found!");
+
+    if (session.payment_status !== 'paid') {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Payment was not successful!");
+    }
+
+    const userId = session.metadata?.user_id;
+    const amount = parseInt(session?.metadata?.amount!); 
+
+    const objID = new Types.ObjectId(userId);
+    const user = await User.findById(objID);
+    if (!user) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "User was not found!");
+    }
+    
+    if (user.lastSession !== session_id) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Session ID is not valid!");
+    }
+    
+    user.lastSession = "";
+
+    user.balance += amount;
+    await user.save();
+
+    return amount;
+};
 
 
 
 export const PaymentService = {
     createConnectionAccount,
     createCheckoutSession,
-    transferToConnectedAccount
+    transferToConnectedAccount,
+    successDeposit
 };
