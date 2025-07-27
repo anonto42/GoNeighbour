@@ -49,6 +49,14 @@ router
         (req: Request, res: Response) => res.send(PyamentCancel)
     )
 
+router
+    .route("/withdraw")
+    .post(
+        auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+        validateRequest( PaymentValidation.createWithdrawZodSchema ),
+        PaymentController.createWithdrawSession
+    )
+
 
 
 export const PaymentRouter = router;

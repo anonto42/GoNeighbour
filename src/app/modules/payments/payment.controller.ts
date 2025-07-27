@@ -124,11 +124,27 @@ const successDeposit = catchAsync(
   }
 );
 
+const createWithdrawSession = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { ...data } = req.body;
+      const result = await PaymentService.createWithdrawSession(user,data);
+  
+      sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Successfully withdraw!',
+        data: result,
+      });
+    }
+);
+
 export const PaymentController = {
     createCheckoutSession,
     createConnectionAccount,
     successDeposit,
     refreshAccount,
-    successPageAccount
+    successPageAccount,
+    createWithdrawSession
 };
     

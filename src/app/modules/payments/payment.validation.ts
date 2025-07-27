@@ -6,14 +6,13 @@ const createDepositZodSchema = z.object({
     })
 })
 
-const createPayment = z.object({
-    
-})
-
-const updatePayment = z.object({
-    
+const createWithdrawZodSchema = z.object({
+    body: z.object({
+        amount: z.number({ required_error: "You must give the amount" })
+    })
 })
 
 export const PaymentValidation = {
-    createDepositZodSchema
+    createDepositZodSchema,
+    createWithdrawZodSchema
 };
