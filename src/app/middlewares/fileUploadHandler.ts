@@ -168,9 +168,9 @@ const fileUploadHandler = () => {
     storage: storage,
     fileFilter: filterFilter,
   }).fields([
-    { name: 'image', maxCount: 1 },
-    { name: 'image1', maxCount: 1 },
-    { name: 'image2', maxCount: 1 },
+    { name: 'image', maxCount: 4 },
+    { name: 'image1', maxCount: 4 },
+    { name: 'image2', maxCount: 4 },
     { name: 'FaceImage', maxCount: 1 },
     { name: 'NIDImage', maxCount: 1 },
     { name: 'media', maxCount: 3 },
