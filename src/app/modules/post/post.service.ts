@@ -21,6 +21,8 @@ const createPost = async (
                 "Please verify your identity with nid to create a post!"
             )
         }
+
+        if( user.balance < data.amount ) throw new ApiError(StatusCodes.BAD_REQUEST,"You don't have enough balance to create a post!, you must add balance to your account!")
         
         data.createdBy = new Types.ObjectId( user._id )
 
@@ -33,8 +35,6 @@ const createPost = async (
         }
         const createdPost = await Post.create(data);
         
-        // data.images.map( e => unlinkFile(e) );
-        
         return createdPost
         
     } catch (error: any) {
@@ -42,7 +42,7 @@ const createPost = async (
         data.images.map( e => unlinkFile(e) );
 
         throw new ApiError(
-            error.status,
+            StatusCodes.BAD_REQUEST,
             error.message
         )
     }
