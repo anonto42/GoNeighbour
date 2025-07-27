@@ -10,6 +10,10 @@ import { Task } from '../task/task.model';
 import { Payment } from '../payments/payment.model';
 import { Bid } from '../bid/bid.model';
 import { Faq } from '../faq/faq.modal';
+import { TopTasks } from '../topTasks/topTast.model';
+import { ITopTasks } from '../topTasks/topTast.interface';
+import { Types } from 'mongoose';
+
 const create_about_us = async (
     // payload: Partial<register>
     payload: JwtPayload,
@@ -504,6 +508,30 @@ const overview = async () => {
       userGrowth: formattedUserGrowthData,
     };
 };
+
+const getTopTasks = async () => {
+  const topTasks = await TopTasks.find();
+  return topTasks;
+};
+
+const createTopTask = async (data: ITopTasks) => {
+  const topTask = await TopTasks.create(data);
+  return topTask;
+};
+
+const updateTopTask = async (id: string, data: ITopTasks) => {
+  const objid = new Types.ObjectId(id);
+  const topTask = await TopTasks.findByIdAndUpdate(objid, data, { new: true });
+  if (!topTask) throw new ApiError(StatusCodes.NOT_FOUND, "Top task not found!");
+  return topTask;
+};
+
+const deleteTopTask = async (id: string) => {
+  const objid = new Types.ObjectId(id);
+  const topTask = await TopTasks.findByIdAndDelete(objid);
+  if (!topTask) throw new ApiError(StatusCodes.NOT_FOUND, "Top task not found!");
+  return topTask;
+};
   
   
 export const AdminServices = {
@@ -513,5 +541,6 @@ export const AdminServices = {
   getAllUsers,blockAUser,getAUser,
   getAllTaskdata,deleteTask,
   getTransactions,
-  overview
+  overview,
+  getTopTasks,createTopTask,updateTopTask,deleteTopTask
 };

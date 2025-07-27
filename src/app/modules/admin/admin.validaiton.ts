@@ -37,10 +37,38 @@ const updateUserZodSchema = z.object({
   image: z.string().optional(),
 });
 
+const createTopTaskZodSchema = z.object({
+  body: z.object({
+    title: z.string({ required_error: 'You must give the data to create the about us' }),
+    description: z.string({ required_error: 'You must give the data to create the about us' }),
+    image: z.any({ required_error: 'You must give the data to create the about us' }),
+    keyword: z.string({ required_error: 'You must give the data to create the about us' }),
+  }),
+});
+
+const updateTopTaskZodSchema = z.object({
+  body: z.object({
+    topTaskId: z.string({ required_error: 'You must give the data to update the about us' }),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    image: z.any().optional(),
+    keyword: z.string().optional(),
+  }),
+});
+
+const deleteTopTaskZodSchema = z.object({
+  body: z.object({
+    topTaskId: z.string({ required_error: 'You must give the data to delete the about us' }),
+  }),
+});
+
 export const AdminValidation = {
   createAbouUsZodSchema,
   createUpdateAbouUsZodSchema,
   createFAQZodSchema,
   updateFAQZodSchema,
   updateUserZodSchema,
+  createTopTaskZodSchema,
+  updateTopTaskZodSchema,
+  deleteTopTaskZodSchema,
 };

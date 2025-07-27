@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { AdminServices } from './admin.service';
+import { getSingleFilePath } from '../../../shared/getFilePath';
 
 const PostAboutUs = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -237,11 +238,77 @@ const overview = catchAsync(
   }
 );
 
+const topTaskTypes = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await AdminServices.getTopTasks();
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get top task types!',
+      data: result,
+    });
+  }
+);
+
+const createTopTask = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { ...data } = req.body;
+    const background = getSingleFilePath(req.files,"image");
+
+    const finalData = {
+      background,
+      ...data
+    }
+
+    const result = await AdminServices.createTopTask(finalData);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully create top task!',
+      data: result,
+    });
+  }
+);
+
+const updateTopTask = catchAsync(
+  async (req: Request, res: Response) => {
+    const { ...data } = req.body;
+    const background = getSingleFilePath(req.files,"image");
+    data.background = background;
+    const id = data.topTaskId;
+    const result = await AdminServices.updateTopTask(id,data);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully update top task!',
+      data: result,
+    });
+  }
+);
+
+const deleteTopTask = catchAsync(
+  async (req: Request, res: Response) => {
+    const { ...data } = req.body;
+    const id = data.topTaskId;
+    const result = await AdminServices.deleteTopTask(id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully delete top task!',
+      data: result,
+    });
+  }
+);
+
 export const AdminController = { 
     PostAboutUs,GetAboutUsData,UpdateAboutUsData,
     GetConditionsData,CreateConditionsData,UpdateConditionsData,
     GetFAQData,CreateFAQData,UpdateFAQData,
     usersGet,blockAUser,getAUserdata,
     getAlTaskdata,deleteTask,getTransactions,
-    overview
+    overview,topTaskTypes,createTopTask,updateTopTask,deleteTopTask
 };
