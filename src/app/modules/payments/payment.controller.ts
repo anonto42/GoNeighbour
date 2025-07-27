@@ -3,7 +3,7 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import { PaymentService, stripe } from "./payment.service";
-import { renderPaymentSuccessPage } from "../../../shared/templates";
+import { depositSuccessPage, renderPaymentSuccessPage } from "../../../shared/templates";
 import { User } from "../user/user.model";
 
 const createConnectionAccount = catchAsync(
@@ -104,21 +104,31 @@ const createCheckoutSession = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
       const user = req.user;
       const { ...data } = req.body;
-      const result = await PaymentService.createCheckoutSession(user,data);
+      const result = await PaymentService.createCheckoutSession(user,data,req);
   
       sendResponse(res, {
         success: true,
         statusCode: StatusCodes.OK,
-        message: 'Successfully payed!',
+        message: 'Successfully deposit!',
         data: result,
       });
     }
 );
 
+const successDeposit = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+
+    const result = await PaymentService.successDeposit(req,res);
+
+    return res.send(depositSuccessPage(result))
+  }
+);
+
 export const PaymentController = {
     createCheckoutSession,
     createConnectionAccount,
-    successPageAccount,
-    refreshAccount
+    successDeposit,
+    refreshAccount,
+    successPageAccount
 };
     
