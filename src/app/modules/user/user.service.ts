@@ -299,6 +299,22 @@ const filterdata = async (
   return posts;
 }
 
+const getNotifications = async (
+  user: JwtPayload,
+  option: {
+    limit: number,
+    page: number
+  }
+) => {
+  const userFromDB = await User.isValidUser( user.id );
+  const skipCount = (option.page - 1) * option.limit;
+
+  return await NotificationModel.find({for: userFromDB._id})
+    .populate("for","name email image")
+    .populate("from","name email image")
+    .skip(skipCount).limit(option.limit)
+}
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
@@ -308,5 +324,6 @@ export const UserService = {
   home_data,
   userReport_request,
   wone_created_suports,
-  filterdata
-};
+  filterdata,
+  getNotifications
+};  

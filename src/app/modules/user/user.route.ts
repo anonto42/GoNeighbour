@@ -82,4 +82,11 @@ router
     UserController.sendReportProblem
   )
 
+router
+  .route("/notifications")
+  .get(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    UserController.getNotifications
+  )
+
 export const UserRoutes = router;

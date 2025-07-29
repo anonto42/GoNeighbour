@@ -145,8 +145,23 @@ const woneReportProblem = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getNotifications = catchAsync(async (req: Request, res: Response) => {
+  
+  const user = req.user;
+  const { limit, page } = req.body;
+  const result = await UserService.getNotifications(user, {page, limit});
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Successfully get notifications data!',
+    data: result,
+  });
+});
+
 export const UserController = { 
   createUser, getUserProfile, updateProfile,
   searchData, top10KeyWords, homeData,
-  sendReportProblem, woneReportProblem,filterData
+  sendReportProblem, woneReportProblem,filterData,
+  getNotifications
 };
