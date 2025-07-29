@@ -13,3 +13,10 @@ export type filterType = {
     minPrice: number;
     maxPrice: number;
 }
+
+export type giveReviewType = {
+    user_id: string;
+    star: number;
+    comment: string;
+    from: string;
+}
