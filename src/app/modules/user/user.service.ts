@@ -8,7 +8,7 @@ import unlinkFile from '../../../shared/unlinkFile';
 import generateOTP from '../../../util/generateOTP';
 import { IUser } from './user.interface';
 import { User } from './user.model';
-import { filterType, register } from '../../../types/user';
+import { filterType, giveReviewType, register } from '../../../types/user';
 import { Post } from '../post/post.model';
 import SearchKeyword from '../keywords/search.model';
 import validator from 'validator';
@@ -17,6 +17,7 @@ import config from '../../../config';
 import { Suport } from '../suport/suport.model';
 import { NotificationModel } from '../notification/notification.model';
 import { socketHelper } from '../../../helpers/socketHelper';
+import { Types } from 'mongoose';
 
 const createUserToDB = async (payload: Partial<register>): Promise<any> => {
   await User.isExistUserByEmail(payload.email!);
@@ -315,6 +316,30 @@ const getNotifications = async (
     .skip(skipCount).limit(option.limit)
 }
 
+const giveReview = async (
+  data: giveReviewType
+) => {
+
+  const userObj = new Types.ObjectId(data.user_id);
+  const user = await User.findById(userObj);
+
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+  };
+
+  const review = {
+    star: data.star,
+    comment: data.comment,
+    from: data.from
+  };
+
+  user.reviews.push(review);  
+  await user.save();
+
+  return review;
+
+}
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
@@ -325,5 +350,6 @@ export const UserService = {
   userReport_request,
   wone_created_suports,
   filterdata,
-  getNotifications
+  getNotifications,
+  giveReview
 };  
