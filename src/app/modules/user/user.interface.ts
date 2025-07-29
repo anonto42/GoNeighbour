@@ -26,7 +26,8 @@ export type IUser = {
     {
       star: number,
       comment: string,
-      from: string
+      from: string,
+      createdAt: Date,
     }
   ];
   authentication?: {
