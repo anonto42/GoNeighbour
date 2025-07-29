@@ -45,4 +45,12 @@ router
     BidController.paytheBid
   )
 
+router
+  .route("/cancel")
+  .post(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    validateRequest( BidValidation.cancelBidZodSchema),
+    BidController.cancelTask
+  )
+
 export const BidRoutes = router;

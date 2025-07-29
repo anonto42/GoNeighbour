@@ -84,10 +84,27 @@ const paytheBid = catchAsync(async (
   });
 });
 
+const cancelTask = catchAsync(async (
+  req: Request, 
+  res: Response
+) => {
+  const user = req.user;
+  const { bid_id } = req.body;
+  const result = await BidService.cancelTask(user,bid_id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Task canceled!",
+    data: result,
+  });
+});
+
 export const BidController = {
   sendBid,
   bidRequestes,
   intrigateWithBid,
   bidRequestesAsAdvengrar,
-  paytheBid
+  paytheBid,
+  cancelTask
 };

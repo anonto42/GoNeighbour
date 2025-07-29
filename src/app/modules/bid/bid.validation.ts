@@ -21,8 +21,15 @@ const payBidZodSchema = z.object({
   }),
 });
 
+const cancelBidZodSchema = z.object({
+  body: z.object({
+    bid_id: z.string({required_error: "You must give the id that you want to cancel!"})
+  }),
+});
+
 export const BidValidation = {
   defaultZodSchema,
   intrigateBidZodSchema,
-  payBidZodSchema
+  payBidZodSchema,
+  cancelBidZodSchema
 };

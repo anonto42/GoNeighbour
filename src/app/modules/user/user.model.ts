@@ -46,6 +46,13 @@ const userSchema = new Schema<IUser, UserModal>(
       type: Number,
       default: 0
     },
+    bidCancelation: {
+      bannedFor: Date,
+      bidCancelationAvailable: {
+        type: Number,
+        default: 3
+      }
+    },
     lastSession: {
       type: String,
       default: ""

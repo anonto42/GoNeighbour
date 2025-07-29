@@ -16,7 +16,17 @@ const sendBid = async (
   data: Bids
 ) => {
   const { id } = payload;
-  const sender = await User.isValidUser(id);
+
+  const userObjId = new mongoose.Types.ObjectId(id);
+  const sender = await User.findById(userObjId);
+  if (!sender) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "User not found!"
+    )
+  }
+
+  await checkBidCancellationStatus(sender);
 
   if (!sender.faceVerifyed) {
     throw new ApiError(
@@ -156,7 +166,17 @@ const intrigateWithBid = async (
   action: boolean
 ) => {
 
-  const user = await User.isValidUser(payload.id);
+  const userObjId = new mongoose.Types.ObjectId(payload.id);
+  const user = await User.findById(userObjId);
+  if (!user) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "User not found!"
+    )
+  }
+
+  await checkBidCancellationStatus(user);
+
   if (!user.faceVerifyed) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
@@ -313,12 +333,69 @@ const paytheBid = async (
   await adventurer.save();
 
   return true;
-}
+};
+
+const checkBidCancellationStatus = async (user: any) => {
+  
+  if (user.bidCancelation.bannedFor > new Date(Date.now())) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "You are not allowed to perform this action because you are blocked for 3 days."
+    )
+  }
+
+  if (user.bidCancelation.bannedFor < new Date(Date.now())) {
+    user.bidCancelation.bidCancelationAvailable = 3;
+    user.bidCancelation.bannedFor = null;
+    await user.save();
+  }
+
+  if (user.bidCancelation.bidCancelationAvailable <= 0) {
+    user.bidCancelation.bannedFor = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); 
+    await user.save();
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "You have no cancellations left. You are blocked for 3 days."
+    )
+  }
+};
+
+const cancelTask = async (payload: JwtPayload, bidID: string) => {
+  const objID = new mongoose.Types.ObjectId(bidID);
+  const bid = await Bid.findById(objID);
+  if (!bid) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "BID not found!");
+  }
+
+  if (bid.adventurer.toString() != payload.id && bid.quizeGiver.toString() != payload.id) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "You are not the adventurer or quizeGiver of this bid!"
+    )
+  }
+
+  const userObjId = new mongoose.Types.ObjectId(payload.id);
+  const user = await User.findById(userObjId);
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "User not found!");
+  }
+
+  await checkBidCancellationStatus(user);
+
+  user.bidCancelation.bidCancelationAvailable -= 1;
+  bid.isCanceled = true;
+  await bid.save();
+  await user.save();
+
+  return true;
+};
 
 export const BidService = {
   sendBid,
+  paytheBid,
+  cancelTask,
   bidRequests,
   intrigateWithBid,
   bidRequesteAsAdvengerer,
-  paytheBid
+  checkBidCancellationStatus
 };

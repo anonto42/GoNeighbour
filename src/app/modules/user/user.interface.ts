@@ -34,6 +34,10 @@ export type IUser = {
     oneTimeCode: number;
     expireAt: Date;
   };
+  bidCancelation: {
+    bannedFor: Date;
+    bidCancelationAvailable: number;
+  };
 };
 
 export type UserModal = {

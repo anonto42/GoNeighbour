@@ -11,4 +11,5 @@ export interface BidI {
     offer_ammount: number;
     reason: string;
     isPaid: boolean;
+    isCanceled: boolean;
 }

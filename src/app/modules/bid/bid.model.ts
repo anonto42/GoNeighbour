@@ -39,6 +39,10 @@ const bidSchema = new Schema<BidI>({
     },
     reason:{
         type: String
+    },
+    isCanceled:{
+        type: Boolean,
+        default: false
     }
 },{
     timestamps: true
