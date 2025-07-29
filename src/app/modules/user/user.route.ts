@@ -89,4 +89,12 @@ router
     UserController.getNotifications
   )
 
+router
+  .route("/give-review")
+  .post(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    validateRequest( UserValidation.giveReviewZodSchema ),
+    UserController.giveReview
+  )
+
 export const UserRoutes = router;
