@@ -159,9 +159,22 @@ const getNotifications = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const giveReview = catchAsync(async (req: Request, res: Response) => {
+  
+  const { ...data } = req.body;
+  const result = await UserService.giveReview(data);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Successfully give review!',
+    data: result,
+  });
+});
+
 export const UserController = { 
   createUser, getUserProfile, updateProfile,
   searchData, top10KeyWords, homeData,
   sendReportProblem, woneReportProblem,filterData,
-  getNotifications
+  getNotifications, giveReview
 };
