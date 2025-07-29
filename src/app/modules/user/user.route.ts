@@ -97,4 +97,11 @@ router
     UserController.giveReview
   )
 
+router
+  .route("/profile-view/:id")
+  .get(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    UserController.getAProfile
+  )
+
 export const UserRoutes = router;

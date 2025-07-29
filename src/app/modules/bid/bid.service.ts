@@ -55,8 +55,8 @@ const sendBid = async (
     createdBy: payload.id,
     reason: data.reason,
     service: post._id,
-    isAccepted_fromAdventurer: adventurer != id ? BID_STATUS.WATING : BID_STATUS.ACCEPTED,
-    isAccepted_fromQuizeGiver: quizeGiver != id ? BID_STATUS.WATING : BID_STATUS.ACCEPTED
+    isAccepted_fromAdventurer: adventurer == id ? BID_STATUS.ACCEPTED : BID_STATUS.WATING,
+    isAccepted_fromQuizeGiver: quizeGiver == id ? BID_STATUS.ACCEPTED : BID_STATUS.WATING
   })
   if (!bid) {
     throw new ApiError(
@@ -292,6 +292,14 @@ const paytheBid = async (
     )
   }
 
+  const quizegiver = await User.findById(bid.quizeGiver);
+  if (!quizegiver) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "QuizeGiver not founded!"
+    )
+  }
+
   const userObjId = new mongoose.Types.ObjectId(payload.id);
   const user = await User.findById(userObjId);
   if (!user) {
@@ -327,9 +335,13 @@ const paytheBid = async (
   user.balance -= bid.offer_ammount;
   adventurer.balance += bid.offer_ammount;
   bid.isPaid = true;
+
+  quizegiver.complitedTasks.push(bid._id);
+  adventurer.complitedTasks.push(bid._id);
   
   await bid.save();
   await user.save();
+  await quizegiver.save();
   await adventurer.save();
 
   return true;

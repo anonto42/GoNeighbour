@@ -341,6 +341,43 @@ const giveReview = async (
 
 }
 
+const getAProfile = async (
+  id: string
+) => {
+  
+  const userObj = new Types.ObjectId(id);
+  const user = await User.findById(userObj)
+                         .populate({
+                          path: "complitedTasks",
+                          populate: {
+                            path: "service",
+                            select: "_id title amount"
+                          }
+                         })
+                         .populate({
+                          path: "complitedTasks",
+                          populate: {
+                            path: "adventurer",
+                            select: "_id name email image"
+                          }
+                         })
+                         .populate({
+                          path: "complitedTasks",
+                          populate: {
+                            path: "quizeGiver",
+                            select: "_id name email image"
+                          }
+                         })
+                         .populate("favorites")
+                         .select("-authentication -paymentValidation -bidCancelation -firstWithdrawal -searchKeywords -stats -lastSession")
+
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+  };
+
+  return user;
+}
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
@@ -352,5 +389,6 @@ export const UserService = {
   wone_created_suports,
   filterdata,
   getNotifications,
-  giveReview
+  giveReview,
+  getAProfile
 };

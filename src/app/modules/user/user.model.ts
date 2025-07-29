@@ -75,9 +75,9 @@ const userSchema = new Schema<IUser, UserModal>(
       default: 'https://i.ibb.co/z5YHLV9/profile.png',
     },
     searchKeywords: {
-        type: [String],
-        default: [],
-        maxlength: 5 
+      type: [String],
+      default: [],
+      maxlength: 5 
     },
     status: {
       type: String,
@@ -92,6 +92,12 @@ const userSchema = new Schema<IUser, UserModal>(
       {
         type: Schema.Types.ObjectId,
         ref: "post"
+      }
+    ],
+    complitedTasks: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "bid"
       }
     ],
     reviews:[

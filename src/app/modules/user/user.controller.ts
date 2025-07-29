@@ -4,6 +4,7 @@ import catchAsync from '../../../shared/catchAsync';
 import { getSingleFilePath } from '../../../shared/getFilePath';
 import sendResponse from '../../../shared/sendResponse';
 import { UserService } from './user.service';
+import ApiError from '../../../errors/ApiError';
 
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -172,9 +173,24 @@ const giveReview = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAProfile = catchAsync(async (req: Request, res: Response) => {
+  
+  const { id } = req.params;
+  if(!id) throw new ApiError(StatusCodes.BAD_REQUEST, "User id is required!");
+
+  const result = await UserService.getAProfile(id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Successfully get a profile!',
+    data: result,
+  });
+});
+
 export const UserController = { 
   createUser, getUserProfile, updateProfile,
   searchData, top10KeyWords, homeData,
   sendReportProblem, woneReportProblem,filterData,
-  getNotifications, giveReview
+  getNotifications, giveReview, getAProfile
 };

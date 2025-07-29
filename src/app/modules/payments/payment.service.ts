@@ -151,6 +151,8 @@ const successDeposit = async (
     
     user.lastSession = "";
 
+    user.firstWithdrawal = true;
+
     user.balance += amount;
     await user.save();
 
@@ -176,11 +178,25 @@ const createWithdrawSession = async (
     throw new ApiError(StatusCodes.BAD_REQUEST, "User has not enough balance!");
   }
 
+  if ( user.firstWithdrawal ) {
+    
+    await stripe.transfers.create({
+        amount,
+        currency: 'usd',
+        destination: user.paymentValidation.accountID,
+    });
+  
+    user.balance -= amount;
+    await user.save();
+  
+    return "successfull";
+  }
+
   const amountInCents = amount * 100;
   const feeInCents = amountInCents * 0.05;
   const amountAfterFeeInCents = amountInCents - feeInCents;
   
-  const transfer = await stripe.transfers.create({
+  await stripe.transfers.create({
       amount: amountAfterFeeInCents,
       currency: 'usd',
       destination: user.paymentValidation.accountID,
