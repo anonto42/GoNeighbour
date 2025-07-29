@@ -36,11 +36,21 @@ const filterDataZodSchema = z.object({
     minPrice: z.number({required_error: "You must give the min price"}),
     maxPrice: z.number({required_error: "You must give the max price"})
   })
-})
+});
+
+const giveReviewZodSchema = z.object({
+  body: z.object({
+    user_id: z.string({required_error: "You must give the user id!"}),
+    star: z.number({required_error: "You must give the star number!"}),
+    comment: z.string({required_error: "You must give the comment!"}),
+    from: z.string({required_error: "You must give the from!"})
+  })
+});
 
 export const UserValidation = {
   createUserZodSchema,
   updateUserZodSchema,
   createReportRequestZodSchema,
-  filterDataZodSchema
+  filterDataZodSchema,
+  giveReviewZodSchema
 };
