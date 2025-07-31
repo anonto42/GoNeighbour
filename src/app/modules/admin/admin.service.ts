@@ -5,7 +5,7 @@ import { about_us, faq, update_faq } from '../../../types/admin';
 import { User } from '../user/user.model';
 import { Policie } from '../policies/policie.model';
 import { policie_type } from '../../../enums/policie';
-import { STATUS } from '../../../enums/user';
+import { STATUS, USER_ROLES } from '../../../enums/user';
 import { Task } from '../task/task.model';
 import { Payment } from '../payments/payment.model';
 import { Bid } from '../bid/bid.model';
@@ -213,8 +213,9 @@ const getAllUsers = async (
 
     const skipCount = (page - 1) * limit;
 
-    const allAdminUsers = await User.find()
-                                    .select("-password -authentication -__v")
+    const allAdminUsers = await User.find({ role: { $ne: USER_ROLES.ADMIN }})
+                                    .populate("complitedTasks totalPosts")
+                                    .select("-password -paymentValidation -authentication -__v")
                                     .skip(skipCount)
                                     .limit(limit);
 

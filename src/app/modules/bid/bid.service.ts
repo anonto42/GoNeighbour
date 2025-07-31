@@ -353,6 +353,8 @@ const paytheBid = async (
   })
 
   user.balance -= bid.offer_ammount;
+  user.totalSpent += bid.offer_ammount;
+  adventurer.totalEarn += bid.offer_ammount;
   adventurer.balance += bid.offer_ammount;
   bid.isPaid = true;
 

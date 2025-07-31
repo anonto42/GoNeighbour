@@ -3,6 +3,9 @@ import { STATUS, USER_ROLES } from '../../../enums/user';
 
 export type IUser = {
   name: string;
+  totalSpent: number;
+  totalEarn: number;
+  totalPosts: Types.ObjectId[];
   user_name: string;
   role: USER_ROLES;
   contact: string;

@@ -14,6 +14,18 @@ const userSchema = new Schema<IUser, UserModal>(
     user_name:{
       type: String
     },
+    totalSpent: {
+      type: Number,
+      default: 0
+    },
+    totalEarn: {
+      type: Number,
+      default: 0
+    },
+    totalPosts:{
+      type: [Schema.Types.ObjectId],
+      ref: "post"
+    },
     role: {
       type: String,
       enum: USER_ROLES,

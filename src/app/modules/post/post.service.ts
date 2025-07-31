@@ -13,7 +13,15 @@ const createPost = async (
 ) => {
     try {
 
-        const user = await User.isValidUser(payload.id);
+        const objid = new Types.ObjectId(payload.id);
+        const user = await User.findById(objid);
+
+        if (!user) {
+            throw new ApiError(
+                StatusCodes.NOT_FOUND,
+                "User not found!"
+            )
+        }
 
         if (!user.faceVerifyed) {
             throw new ApiError(
@@ -34,6 +42,9 @@ const createPost = async (
             )
         }
         const createdPost = await Post.create(data);
+
+        user.totalPosts.push(createdPost._id);
+        await user.save();
         
         return createdPost
         
