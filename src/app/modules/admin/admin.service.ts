@@ -339,175 +339,302 @@ const getTransactions = async (
     return transactions;
 };
 
+// const overview = async () => {
+
+//     // Total User Count
+//     const totalUser = await User.find().countDocuments();
+  
+//     // Total Job Request (Offer Count)
+//     const totalJobRequest = await Bid.find().countDocuments();
+  
+//     // Total Job Post (Task Count)
+//     const totalTask = await Task.find().countDocuments();
+  
+//     // Total Commission Aggregation for Successful Payments
+//     const totalCommission = await Payment.aggregate([
+//       {
+//         $group: {
+//           _id: null,
+//           totalCommission: { $sum: "$commission" },
+//         },
+//       },
+//     ]);
+//     const commissionSum = totalCommission[0]?.totalCommission || 0;
+  
+//     // Current Year
+//     const currentYear = new Date().getFullYear();
+  
+//     // Yearly Revenue Data: Grouped by Month
+//     const result = await Payment.aggregate([
+//       {
+//         $match: {
+//           createdAt: {
+//             $gte: new Date(`${currentYear}-01-01`),
+//             $lt: new Date(`${currentYear + 1}-01-01`),
+//           },
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: { $month: "$createdAt" },
+//           totalCommission: { $sum: "$commission" },
+//         },
+//       },
+//     ]);
+  
+//     const months = [
+//       "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+//       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+//     ];
+  
+//     // Format the result to map month to total commission
+//     const commissionMap = new Map<number, number>();
+//     result.forEach((entry) => {
+//       commissionMap.set(entry._id, entry.totalCommission);
+//     });
+  
+//     const formattedRevenueData = months.map((monthName, index) => ({
+//       month: monthName,
+//       commission: commissionMap.get(index + 1) || 0,
+//     }));
+  
+//     // User Growth Data: Grouped by Month and Role
+//     // const userGrowthData = await User.aggregate([
+//     //   {
+//     //     $project: {
+//     //       role: 1,
+//     //       month: { $month: "$createdAt" },   
+//     //       year: { $year: "$createdAt" },  
+//     //     },
+//     //   },
+//     //   {
+//     //     $match: { "year": currentYear }, 
+//     //   },
+//     //   {
+//     //     $group: {
+//     //       _id: { month: "$month", role: "$role" },
+//     //       count: { $sum: 1 },
+//     //     },
+//     //   },
+//     //   {
+//     //     $group: {
+//     //       _id: "$_id.month",
+//     //       roles: {
+//     //         $push: { role: "$_id.role", count: "$count" },
+//     //       },
+//     //     },
+//     //   },
+//     //   {
+//     //     $project: {
+//     //       _id: 0,
+//     //       month: "$_id",
+//     //       serviceProvider: {
+//     //         $let: {
+//     //           vars: {
+//     //             sp: {
+//     //               $arrayElemAt: [
+//     //                 {
+//     //                   $filter: {
+//     //                     input: "$roles",
+//     //                     as: "item",
+//     //                     cond: { $eq: ["$$item.role", "serviceProvider"] },
+//     //                   },
+//     //                 },
+//     //                 0,
+//     //               ],
+//     //             },
+//     //           },
+//     //           in: { $ifNull: ["$$sp.count", 0] },
+//     //         },
+//     //       },
+//     //       categoryUser: {
+//     //         $let: {
+//     //           vars: {
+//     //             cu: {
+//     //               $arrayElemAt: [
+//     //                 {
+//     //                   $filter: {
+//     //                     input: "$roles",
+//     //                     as: "item",
+//     //                     cond: { $eq: ["$$item.role", "categoryUser"] },
+//     //                   },
+//     //                 },
+//     //                 0,
+//     //               ],
+//     //             },
+//     //           },
+//     //           in: { $ifNull: ["$$cu.count", 0] },
+//     //         },
+//     //       },
+//     //     },
+//     //   },
+//     //   { $sort: { month: 1 } }, // Sort by month
+//     // ]);
+
+//     const userGrowthData = await User.aggregate([
+//       {
+//         $project: {
+//           month: { $month: "$createdAt" },
+//           year: { $year: "$createdAt" },
+//         },
+//       },
+//       {
+//         $match: { year: currentYear }, // Match current year
+//       },
+//       {
+//         $group: {
+//           _id: "$month",  // Group by month
+//           count: { $sum: 1 }, // Count the number of users in each month
+//         },
+//       },
+//       {
+//         $project: {
+//           _id: 0,  // Remove the default _id field
+//           month: "$_id", // Rename _id to month
+//           newUsers: "$count", // Rename count to newUsers
+//         },
+//       },
+//       { $sort: { month: 1 } }, // Sort by month
+//     ]);
+  
+//     const userGrowthMap = new Map<number, { serviceProvider: number, categoryUser: number }>();
+  
+//     userGrowthData.forEach(entry => {
+//       const monthIndex = entry.month - 1; 
+//       if (!userGrowthMap.has(monthIndex)) {
+//         userGrowthMap.set(monthIndex, { serviceProvider: 0, categoryUser: 0 });
+//       }
+      
+//       const currentData = userGrowthMap.get(monthIndex);
+//       if (currentData) {
+//         currentData.serviceProvider += entry.serviceProvider;
+//         currentData.categoryUser += entry.categoryUser;
+//       }
+//     });
+  
+//     const formattedUserGrowthData = months.map((monthName, index) => {
+//       const growth = userGrowthMap.get(index) || { serviceProvider: 0, categoryUser: 0 };
+//       return {
+//         month: monthName,
+//         serviceProvider: growth.serviceProvider,
+//         categoryUser: growth.categoryUser,
+//       };
+//     });
+  
+//     return {
+//       totalTask,
+//       totalJobRequest,
+//       totalUser,
+//       totalRevenue: commissionSum,
+//       yearlyRevenueData: formattedRevenueData,
+//       userGrowth: formattedUserGrowthData,
+//     };
+// };
+
 const overview = async () => {
 
-    // Total User Count
-    const totalUser = await User.find().countDocuments();
-  
-    // Total Job Request (Offer Count)
-    const totalJobRequest = await Bid.find().countDocuments();
-  
-    // Total Job Post (Task Count)
-    const totalTask = await Task.find().countDocuments();
-  
-    // Total Commission Aggregation for Successful Payments
-    const totalCommission = await Payment.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalCommission: { $sum: "$commission" },
+  // Total User Count
+  const totalUser = await User.find().countDocuments();
+
+  // Total Job Request (Offer Count)
+  const totalJobRequest = await Bid.find().countDocuments();
+
+  // Total Job Post (Task Count)
+  const totalTask = await Task.find().countDocuments();
+
+  // Total Commission Aggregation for Successful Payments
+  const totalCommission = await Payment.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalCommission: { $sum: "$commission" },
+      },
+    },
+  ]);
+  const commissionSum = totalCommission[0]?.totalCommission || 0;
+
+  // Current Year
+  const currentYear = new Date().getFullYear();
+
+  // Yearly Revenue Data: Grouped by Month
+  const result = await Payment.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: new Date(`${currentYear}-01-01`),
+          $lt: new Date(`${currentYear + 1}-01-01`),
         },
       },
-    ]);
-    const commissionSum = totalCommission[0]?.totalCommission || 0;
-  
-    // Current Year
-    const currentYear = new Date().getFullYear();
-  
-    // Yearly Revenue Data: Grouped by Month
-    const result = await Payment.aggregate([
-      {
-        $match: {
-          createdAt: {
-            $gte: new Date(`${currentYear}-01-01`),
-            $lt: new Date(`${currentYear + 1}-01-01`),
-          },
-        },
+    },
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+        totalCommission: { $sum: "$commission" },
       },
-      {
-        $group: {
-          _id: { $month: "$createdAt" },
-          totalCommission: { $sum: "$commission" },
-        },
+    },
+  ]);
+
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  ];
+
+  // Format the result to map month to total commission
+  const commissionMap = new Map<number, number>();
+  result.forEach((entry) => {
+    commissionMap.set(entry._id, entry.totalCommission);
+  });
+
+  const formattedRevenueData = months.map((monthName, index) => ({
+    month: monthName,
+    commission: commissionMap.get(index + 1) || 0,
+  }));
+
+  const userGrowthData = await User.aggregate([
+    {
+      $project: {
+        month: { $month: "$createdAt" },
+        year: { $year: "$createdAt" },
       },
-    ]);
-  
-    const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    ];
-  
-    // Format the result to map month to total commission
-    const commissionMap = new Map<number, number>();
-    result.forEach((entry) => {
-      commissionMap.set(entry._id, entry.totalCommission);
-    });
-  
-    const formattedRevenueData = months.map((monthName, index) => ({
-      month: monthName,
-      commission: commissionMap.get(index + 1) || 0,
-    }));
-  
-    // User Growth Data: Grouped by Month and Role
-    const userGrowthData = await User.aggregate([
-      {
-        $project: {
-          role: 1,
-          month: { $month: "$createdAt" },  // Extract month directly
-          year: { $year: "$createdAt" },   // Extract year directly
-        },
+    },
+    {
+      $match: { year: currentYear }, // Match current year
+    },
+    {
+      $group: {
+        _id: "$month",  // Group by month
+        count: { $sum: 1 },  // Count how many users were created in each month
       },
-      {
-        $match: { "year": currentYear },  // Filter for the current year
+    },
+    {
+      $project: {
+        _id: 0,  // Remove the default _id field
+        month: "$_id", // Rename _id to month
+        newUsers: "$count", // Rename count to newUsers
       },
-      {
-        $group: {
-          _id: { month: "$month", role: "$role" },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: "$_id.month",
-          roles: {
-            $push: { role: "$_id.role", count: "$count" },
-          },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          month: "$_id",
-          serviceProvider: {
-            $let: {
-              vars: {
-                sp: {
-                  $arrayElemAt: [
-                    {
-                      $filter: {
-                        input: "$roles",
-                        as: "item",
-                        cond: { $eq: ["$$item.role", "serviceProvider"] },
-                      },
-                    },
-                    0,
-                  ],
-                },
-              },
-              in: { $ifNull: ["$$sp.count", 0] },
-            },
-          },
-          categoryUser: {
-            $let: {
-              vars: {
-                cu: {
-                  $arrayElemAt: [
-                    {
-                      $filter: {
-                        input: "$roles",
-                        as: "item",
-                        cond: { $eq: ["$$item.role", "categoryUser"] },
-                      },
-                    },
-                    0,
-                  ],
-                },
-              },
-              in: { $ifNull: ["$$cu.count", 0] },
-            },
-          },
-        },
-      },
-      { $sort: { month: 1 } }, // Sort by month
-    ]);
-  
-    // Initialize an empty map to hold user growth data by month
-    const userGrowthMap = new Map<number, { serviceProvider: number, categoryUser: number }>();
-  
-    // Process the raw data to accumulate user growth by month
-    userGrowthData.forEach(entry => {
-      const monthIndex = entry.month - 1; // Map month (1-12) to (0-11)
-      if (!userGrowthMap.has(monthIndex)) {
-        userGrowthMap.set(monthIndex, { serviceProvider: 0, categoryUser: 0 });
-      }
-      
-      const currentData = userGrowthMap.get(monthIndex);
-      if (currentData) {
-        currentData.serviceProvider += entry.serviceProvider;
-        currentData.categoryUser += entry.categoryUser;
-      }
-    });
-  
-    // Ensure that every month has a value, even if it's 0
-    const formattedUserGrowthData = months.map((monthName, index) => {
-      const growth = userGrowthMap.get(index) || { serviceProvider: 0, categoryUser: 0 };
-      return {
-        month: monthName,
-        serviceProvider: growth.serviceProvider,
-        categoryUser: growth.categoryUser,
-      };
-    });
-  
-    // Return the Summary Data
+    },
+    { $sort: { month: 1 } }, // Sort by month in ascending order
+  ]);
+
+  // Map the result to ensure all months are present, even if no users were added in some months
+  const formattedUserGrowthData = months.map((monthName, index) => {
+    const entry = userGrowthData.find(data => data.month === index + 1);
     return {
-      totalTask,
-      totalJobRequest,
-      totalUser,
-      totalRevenue: commissionSum,
-      yearlyRevenueData: formattedRevenueData,
-      userGrowth: formattedUserGrowthData,
+      month: monthName,
+      newUsers: entry ? entry.newUsers : 0, // If no data for the month, set newUsers to 0
     };
+  });
+
+  return {
+    totalTask,
+    totalJobRequest,
+    totalUser,
+    totalRevenue: commissionSum,
+    yearlyRevenueData: formattedRevenueData,
+    userGrowth: formattedUserGrowthData,
+  };
 };
+
 
 const getTopTasks = async () => {
   const topTasks = await TopTasks.find();
