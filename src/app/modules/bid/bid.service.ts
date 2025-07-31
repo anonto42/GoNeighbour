@@ -10,6 +10,8 @@ import mongoose from 'mongoose';
 import { Bid } from './bid.model';
 import { Task } from '../task/task.model';
 import { BID_STATUS } from '../../../enums/bid';
+import { Payment } from '../payments/payment.model';
+import { v4 } from 'uuid';
 
 const sendBid = async (
   payload: JwtPayload,
@@ -227,7 +229,7 @@ const intrigateWithBid = async (
     
     await bid.save();
 
-    if ( payload.id != bid.createdBy ) {
+    if ( bid.isAccepted_fromAdventurer == BID_STATUS.ACCEPTED && bid.isAccepted_fromQuizeGiver == BID_STATUS.ACCEPTED ) {
       await Task.create({ 
         customer: bid.quizeGiver,
         provider: bid.adventurer,
@@ -332,6 +334,24 @@ const paytheBid = async (
     )
   }
 
+  const commission = bid.offer_ammount * 0.5;
+
+  const task = await Task.findOne({bid: bid._id});
+  if (!task) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Task not found!"
+    )
+  }
+
+  const uniqueID = v4().replace(/-/g, '').slice(0, 16);;
+
+  const paytment = await Payment.create({
+    taskID:task,
+    transactionId: uniqueID,
+    commission
+  })
+
   user.balance -= bid.offer_ammount;
   adventurer.balance += bid.offer_ammount;
   bid.isPaid = true;
@@ -344,7 +364,7 @@ const paytheBid = async (
   await quizegiver.save();
   await adventurer.save();
 
-  return true;
+  return paytment;
 };
 
 const checkBidCancellationStatus = async (user: any) => {
