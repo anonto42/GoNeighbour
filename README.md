@@ -1,6 +1,3 @@
-Here’s a professional and well-organized `README.md` template for your **GoNeighbour** project based on the details you provided:
-
-````markdown
 # GoNeighbour - Local Task Management Application
 
 GoNeighbour is a local task management application that allows users to manage their tasks and locations. The application leverages live location tracking with Google Maps API, real-time communication via Socket.io, and email notifications via Nodemailer. This app is built with TypeScript, Node.js, and Docker for containerization.
@@ -73,13 +70,7 @@ If you want to run the application using Docker, make sure you have Docker insta
 #### Build the Docker Image
 
 ```bash
-docker build -t go-neighbour .
-```
-
-#### Run the Docker Container
-
-```bash
-docker run -p 3000:3000 --env-file .env go-neighbour
+docker compose up
 ```
 
 This will run the application inside a container and map port 3000 from the container to port 3000 on your machine.
@@ -145,20 +136,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 * **Nodemailer**: Configure SMTP settings for email notifications in your `.env` file.
 
 ---
-
-Feel free to contribute to this project by opening issues or submitting pull requests.
-
-```
-
-### Key Points of the `README.md`:
-
-- **Basic Overview**: Provides an introduction to the project, including the core features and technologies.
-- **Installation Steps**: Clear, step-by-step instructions on how to set up and run the project.
-- **Docker Setup**: Detailed instructions on how to containerize the app with Docker.
-- **Scripts**: Lists the useful NPM scripts that come with the project.
-- **Dependencies**: Mentions key dependencies for the backend, location, and database.
-- **Environment Variables**: Emphasizes the importance of the `.env` file for configuration.
-- **License**: A mention of the project's license (if applicable).
-
-This should give potential users or collaborators all the necessary information in a clean, concise format! Let me know if you need further edits or additions!
-```
