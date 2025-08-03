@@ -73,7 +73,7 @@ If you want to run the application using Docker, make sure you have Docker insta
 docker compose up
 ```
 
-This will run the application inside a container and map port 3000 from the container to port 3000 on your machine.
+This will run the application inside a container and map port from the container to port of `.env` on your machine.
 
 ## Project Structure
 
