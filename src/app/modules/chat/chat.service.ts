@@ -51,7 +51,8 @@ const getChatById = async ( id: string ) => {
     throw new Error('Invalid ObjectId');
   }
   
-  const chat = await ChatRoom.findById(id);
+  const chat = await ChatRoom.findById(id)
+    .populate("participants", "email name image");
   
   return chat;
 };
