@@ -72,7 +72,7 @@ const allChats = async (
   const chats = await ChatRoom.find({
     participants: { $in: [id] }
   })
-    .populate("participants", "email name")
+    .populate("participants", "email name image")
     .skip(skip)
     .limit(limit);
 
