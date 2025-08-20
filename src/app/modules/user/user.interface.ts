@@ -36,7 +36,7 @@ export type IUser = {
   ];
   authentication?: {
     isResetPassword: boolean;
-    oneTimeCode: number;
+    oneTimeCode: string;
     expireAt: Date;
   };
   bidCancelation: {

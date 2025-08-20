@@ -378,6 +378,18 @@ const getAProfile = async (
   return user;
 }
 
+const deleteUser = async (
+  id: string
+) => {
+  const userObj = new Types.ObjectId(id);
+  const user = await User.findByIdAndDelete(userObj);
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+  };
+
+  return true;
+}
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
@@ -390,5 +402,6 @@ export const UserService = {
   filterdata,
   getNotifications,
   giveReview,
-  getAProfile
+  getAProfile,
+  deleteUser
 };

@@ -126,7 +126,7 @@ const userSchema = new Schema<IUser, UserModal>(
         default: false,
       },
       oneTimeCode: {
-        type: Number,
+        type: String,
         default: null,
       },
       expireAt: {

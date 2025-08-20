@@ -188,9 +188,24 @@ const getAProfile = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  
+  const id = req.user.id;
+  if(!id) throw new ApiError(StatusCodes.BAD_REQUEST, "User id is required!");
+
+  const result = await UserService.deleteUser(id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Successfully delete a user!',
+    data: result,
+  });
+});
+
 export const UserController = { 
   createUser, getUserProfile, updateProfile,
   searchData, top10KeyWords, homeData,
   sendReportProblem, woneReportProblem,filterData,
-  getNotifications, giveReview, getAProfile
+  getNotifications, giveReview, getAProfile, deleteUser
 };

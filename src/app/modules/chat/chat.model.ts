@@ -7,8 +7,8 @@ const chatRoom = new Schema<IChat, ChatModel>({
         type: String
     },
     participants:{
-        type: [String],
-        required: true
+        type: [Schema.Types.ObjectId],
+        ref: "user"
     }
 },{
     timestamps: true

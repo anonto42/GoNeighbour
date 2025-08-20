@@ -30,9 +30,9 @@ const postSchema = new Schema<postInterface>({
         required: true
     },
     images: [
-        {
-            type: String,
-        }
+      {
+        type: String,
+      }
     ],
     lat: {
       type: Number,

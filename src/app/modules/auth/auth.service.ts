@@ -125,7 +125,7 @@ const forgetPasswordToDB = async (email: string) => {
   //send mail
   const otp = generateOTP();
   const value = {
-    otp,
+    otp: otp.toString(),
     email: isExistUser.email,
   };
   const forgetPassword = emailTemplate.resetPassword(value);
