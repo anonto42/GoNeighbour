@@ -4,21 +4,45 @@ const createAccount = (values: ICreateAccount) => {
   const data = {
     to: values.email,
     subject: 'Verify your account',
-    html: `
-    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 30px; color: #333;">
-        <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 25px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-          <h2 style="text-align: center; color: #222;">Hey! ${values.name}, Your GoNeighbour Account Credentials</h2>
-          <p style="font-size: 15px; text-align: center;">Use the code below to verify your account:</p>
-          <div style="background-color: #277E16; width: 100px; margin: 20px auto; padding: 12px 0; border-radius: 6px; color: #fff; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 2px;">
-            ${values.otp}
+    html: `<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 50px; padding: 20px; color: #555;">
+      <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+        <div style="margin:50px auto;width:70%;padding:20px 0">
+          <div style="border-bottom:1px solid #eee">
+            <a href="" style="font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600">BOOLBI</a>
           </div>
-          <p style="font-size: 14px; text-align: center; color: #555;">This code is valid for <strong>5 minutes</strong>.</p>
-          <p style="font-size: 13px; color: #999; margin-top: 25px; line-height: 1.6;">
-            If you didn’t request this code, you can safely ignore this email. Someone may have entered your email by mistake.
-          </p>
+          <p style="font-size:1.1em">Hi,</p>
+          <p>Thank you for choosing us. Use the following OTP to complete your Sign Up procedures. OTP is valid for 3 minutes.</p>
+          <h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">${values.otp}</h2>
+          <p style="font-size:0.9em;">Regards,<br />${values.name}</p>
+          <hr style="border:none;border-top:1px solid #eee" />
+          <div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
+            <p>${values.subjet}</p>
+          </div>
         </div>
-      </body>
-    `,
+      </div>
+
+      <!-- Mobile Responsiveness -->
+      <style>
+        @media screen and (max-width: 600px) {
+          body {
+            margin: 20px;
+            padding: 10px;
+          }
+          .container {
+            width: 100% !important;
+            margin: 0;
+          }
+          h2 {
+            font-size: 18px;
+            padding: 0 8px;
+          }
+          .float-right {
+            float: none;
+            text-align: center;
+          }
+        }
+      </style>
+    </body>`,
   };
 
   return data;
