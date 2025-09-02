@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const createAbouUsZodSchema = z.object({
   body: z.object({
-    qui: z.string({ required_error: 'You must give the data to create the about us' })
+    data: z.string({ required_error: 'You must give the data to create the about us' })
   }),
 });
 

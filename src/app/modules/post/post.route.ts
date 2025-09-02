@@ -5,6 +5,7 @@ import validateRequest from "../../middlewares/validateRequest";
 import { PostValidation } from "./post.validation";
 import fileUploadHandler from "../../middlewares/fileUploadHandler";
 import { PostController } from "./post.controller";
+import { Post } from "./post.model";
 
 
 const router = Router();
@@ -22,16 +23,20 @@ router
         auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
         PostController.aPost
     )
+    .delete(
+        auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+        PostController.deletePost
+    )
 
 router
-    .route('/upload/do')
+    .route('/do')
     .post(
         auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
         fileUploadHandler(),
         validateRequest( PostValidation.createPostZodSchema ),
         PostController.createPost
     )
-    .put(
+    .patch(
         auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
         fileUploadHandler(),
         validateRequest( PostValidation.updatePostZodSchema ),

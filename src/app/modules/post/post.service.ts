@@ -113,17 +113,18 @@ const updatedPost = async (
                 `Post not founded to update!`
             )
         }
-        const createdPost = await Post.findByIdAndUpdate(data.postId,data,{ new: true }).select("-location - lat -lot");
+        const createdPost = await Post.findByIdAndUpdate(data.postId,data,{ new: true });
         
-        if (data.images.length > 0) {
-            isPostExist.images.map( e => unlinkFile(e) );
-        }
+        // if (data.images && data.images.length > 0) {
+        //     isPostExist.images.map( e => unlinkFile(e) );
+        // }
         
         return createdPost
         
     } catch (error: any) {
-        
-        if (data.images.length > 0) {
+
+        console.log(error)
+        if (data.images && data.images.length > 0) {
             data.images.map( e => unlinkFile(e) );
         }
 
@@ -152,12 +153,41 @@ const lastPosts = async (
     return posts;
 };
 
-const addTofavorite = async (
+const addToFavorite = async (
+  user: JwtPayload,
+  postID: string
+): Promise<boolean> => {
+    
+  const userFromDB = await User.findById(user.id);
+  if (!userFromDB) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid user");
+  }
+
+  const post = await Post.findById(postID);
+  if (!post) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Post not found");
+  }
+
+  const isAlreadyFavorite = userFromDB.favorites?.some(
+    (favPostId: any) => favPostId.toString() === postID
+  );
+
+  if (isAlreadyFavorite) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Post already favorited");
+  }
+
+  userFromDB.favorites.push(post._id);
+  await userFromDB.save();
+
+  return true;
+};
+
+const deletePost = async (
     user: JwtPayload,
     postID: string
 ) => {
-    const userFromDB = await User.isValidUser( user.id );
-    const userO = await User.findById(userFromDB._id);
+    console.log(postID)
+    const userFromDB = await User.isValidUser(user.id);
     const isPostExist = await Post.findById(postID);
     if (!isPostExist) {
         throw new ApiError(
@@ -166,54 +196,43 @@ const addTofavorite = async (
         )
     };
 
-    userO?.favorites.push(isPostExist._id);
-    await userO?.save();
+    await Post.deleteOne({ _id: postID });
 
     return true
 };
 
 const getFavorite = async (
-    user: JwtPayload,
-    limit: number,
-    page: number
+  user: JwtPayload,
+  limit: number,
+  page: number
 ) => {
-    const userFromDB = await User.isValidUser(user.id);
+  const userFromDB = await User.isValidUser(user.id);
 
-    const skipCount = (page - 1) * limit;
+  if (!userFromDB?.favorites || userFromDB.favorites.length === 0) {
+    return [];
+  }
 
-    const userWithFavorites = await User.findById(userFromDB._id)
-                                        .select("-location -__v -lat -lot")
-                                        .populate({
-                                            path: 'favorites',
-                                            populate: {
-                                                path: 'createdBy', 
-                                                select: 'name email image'  
-                                            }
-                                        });
+  const skipCount = (page - 1) * limit;
 
-    if (!userWithFavorites || !userWithFavorites.favorites) {
-        return [];  
-    }
+  const favorites = await Post.find({ _id: { $in: userFromDB.favorites } })
+    .select("-location -__v")
+    .populate({
+      path: "createdBy",
+      select: "name email image"
+    })
+    .skip(skipCount)
+    .limit(limit)
+    .lean();
+    console.log(favorites)
 
-    const paginatedFavorites = userWithFavorites.favorites.slice(skipCount, skipCount + limit);
-
-    const formattedFavorites = paginatedFavorites.map((favorite: any) => {
-    const favoriteData = favorite.toObject(); 
-
-    delete favoriteData.location;
-    delete favoriteData.__v;
-
-    return {
-        ...favoriteData, 
-        createdBy: favorite.createdBy ? {
-            name: favorite.createdBy.name,
-            email: favorite.createdBy.email,
-            image: favorite.createdBy.image
-        } : null 
-    };
-})
-
-    return formattedFavorites;
+  return favorites.map((fav: any) => ({
+    ...fav,
+    createdBy: fav.createdBy ? {
+      name: fav.createdBy.name,
+      email: fav.createdBy.email,
+      image: fav.createdBy.image
+    } : null
+  }));
 };
 
 const removeFromFavorite = async (
@@ -242,7 +261,8 @@ export const PostService = {
     updatedPost,
     removeFromFavorite,
     lastPosts,
-    addTofavorite,
+    addToFavorite,
     getFavorite,
-    woneCreatedPosts
+    woneCreatedPosts,
+    deletePost
 }

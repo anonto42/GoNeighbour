@@ -17,7 +17,8 @@ import config from '../../../config';
 import { Suport } from '../suport/suport.model';
 import { NotificationModel } from '../notification/notification.model';
 import { socketHelper } from '../../../helpers/socketHelper';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
+import { startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears  } from 'date-fns';
 
 const createUserToDB = async (payload: Partial<register>): Promise<any> => {
   await User.isExistUserByEmail(payload.email!);
@@ -87,7 +88,7 @@ const updateProfileToDB = async (
     const isExistUser = await User.isValidUser(id);
   
     //unlink file here
-    if (payload.image) {
+    if (payload.image && isExistUser.image) {
       unlinkFile(isExistUser.image);
     };
   
@@ -95,11 +96,13 @@ const updateProfileToDB = async (
       new: true,
     }).select("-password -verified -authentication").lean().exec();
   
-    unlinkFile(payload.image!)
+    // unlinkFile(payload.image!)
     return updateDoc;
     
   } catch (error: any) {
-    unlinkFile(payload.image as string)
+    if (payload.image) {
+      unlinkFile(payload.image as string)
+    }
     throw new ApiError(
       error.status,
       error.message
@@ -114,9 +117,9 @@ const searchData = async (
   limit: number = 10
 ) => {
   
-    if (typeof keyword !== 'string' || keyword.trim().length === 0) {
-        throw new Error('Invalid keyword format');
-    }
+    // if (typeof keyword !== 'string' || keyword.trim().length === 0) {
+    //     throw new Error('Invalid keyword format');
+    // }
 
     const sanitizedKeyword = validator.escape(keyword.trim()); 
 
@@ -133,9 +136,19 @@ const searchData = async (
 
     if (posts.length === 0) {
         const randomPosts = await Post.aggregate([
-            { $sample: { size: limit } } 
+          { $sample: { size: limit } } 
         ]);
-        return randomPosts;
+        const user = await User.findById(new mongoose.Types.ObjectId(payload.id));
+        if (user) {
+          user.searchKeywords.unshift(keyword);
+      
+          if (user.searchKeywords.length > 5) {
+          user.searchKeywords.pop();
+        }
+  
+      await user.save();
+    }
+      return randomPosts;
     }
 
     const searchKeyword = await SearchKeyword.findOne({ keyword: sanitizedKeyword });
@@ -146,7 +159,7 @@ const searchData = async (
         await SearchKeyword.create({ keyword: sanitizedKeyword });  
     }
 
-    const user = await User.findById(payload.id);
+    const user = await User.findById(new mongoose.Types.ObjectId(payload.id));
     if (user) {
       user.searchKeywords.unshift(keyword);
   
@@ -170,40 +183,32 @@ const getTopSearchedKeywords = async (limit: number = 10) => {
 };
 
 const home_data = async (
-  paylod: JwtPayload,
+  payload: JwtPayload,
   page: number = 1,
   limit: number = 10
 ) => {
-  const user = await User.findById(paylod.id);
+  const user = await User.findById(payload.id).select("favorites");
 
   if (!user) {
-      throw new Error('User not found');
-  }
-
-  const searchKeywords = user.searchKeywords;
-
-  if (searchKeywords.length === 0) {
-      const randomPosts = await Post.aggregate([
-          { $sample: { size: limit } }
-      ]);
-      return randomPosts;
+    throw new Error('User not found');
   }
 
   const skipCount = (page - 1) * limit;
 
-  const posts = await Post.find({
-      $or: searchKeywords.map((keyword: string) => ({
-          $or: [
-              { title: { $regex: keyword, $options: 'i' } },
-              { description: { $regex: keyword, $options: 'i' } }
-          ]
-      }))
-  })
-  .skip(skipCount) 
-  .limit(limit); 
+  const posts = await Post.find({})
+    .skip(skipCount)
+    .limit(limit)
+    .lean();
 
-  return posts;
-} 
+  const favoriteSet = new Set(user.favorites.map(favId => favId.toString()));
+
+  const postsWithFavoriteFlag = posts.map(post => ({
+    ...post,
+    isFavorite: favoriteSet.has(post._id.toString())
+  }));
+
+  return postsWithFavoriteFlag;
+};
 
 const userReport_request = async (
   user: JwtPayload,
@@ -303,18 +308,63 @@ const filterdata = async (
 const getNotifications = async (
   user: JwtPayload,
   option: {
-    limit: number,
-    page: number
+    limit: number;
+    page: number;
+    date: "weekly" | "monthly" | "yearly" | "Select";
   }
 ) => {
-  const userFromDB = await User.isValidUser( user.id );
+  const userFromDB = await User.isValidUser(user.id);
   const skipCount = (option.page - 1) * option.limit;
 
-  return await NotificationModel.find({for: userFromDB._id})
-    .populate("for","name email image")
-    .populate("from","name email image")
-    .skip(skipCount).limit(option.limit)
-}
+  if (option.date === "Select") {
+    return await NotificationModel.find({ for: userFromDB._id })
+      .populate("for", "name email image")
+      .populate("from", "name email image")
+      .skip(skipCount)
+      .limit(option.limit);
+  }
+
+  let startDate: Date;
+  let endDate: Date;
+
+  const now = new Date();
+
+  switch (option.date) {
+    case "weekly":
+      console.log("Fetching last week's notifications");
+      const lastWeek = subWeeks(now, 1);
+      startDate = startOfWeek(lastWeek, { weekStartsOn: 1 }); // Monday
+      endDate = endOfWeek(lastWeek, { weekStartsOn: 1 });
+      break;
+
+    case "monthly":
+      console.log("Fetching last month's notifications");
+      const lastMonth = subMonths(now, 1);
+      startDate = startOfMonth(lastMonth);
+      endDate = endOfMonth(lastMonth);
+      break;
+
+    case "yearly":
+      console.log("Fetching last year's notifications");
+      const lastYear = subYears(now, 1);
+      startDate = startOfYear(lastYear);
+      endDate = endOfYear(lastYear);
+      break;
+
+    default:
+      startDate = new Date(0); // Fallback to fetch all
+      endDate = now;
+  }
+
+  return await NotificationModel.find({
+      for: userFromDB._id,
+      createdAt: { $gte: startDate, $lt: endDate }
+    })
+    .populate("for", "name email image")
+    .populate("from", "name email image")
+    .skip(skipCount)
+    .limit(option.limit);
+};
 
 const giveReview = async (
   data: giveReviewType

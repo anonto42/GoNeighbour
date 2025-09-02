@@ -5,6 +5,7 @@ import { getSingleFilePath } from '../../../shared/getFilePath';
 import sendResponse from '../../../shared/sendResponse';
 import { UserService } from './user.service';
 import ApiError from '../../../errors/ApiError';
+import { Post } from '../post/post.model';
 
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -35,10 +36,14 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
 const updateProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
-    let image = getSingleFilePath(req.files, 'image');
-
+    if (req.files) {
+      const image = getSingleFilePath(req.files, 'image');
+      if (image) {
+        req.body.image = image;
+      }
+    }
+    
     const data = {
-      image,
       ...req.body,
     };
     const result = await UserService.updateProfileToDB(user, data);
@@ -102,7 +107,19 @@ const filterData = catchAsync(async (req: Request, res: Response) => {
   
   const user = req.user;
   const { ...data } = req.body;
-  const result = await UserService.filterdata(user,data);
+
+  let result;
+
+  if (data.uni && data.uni == 'true') {
+    result = await Post.find();
+  }else{
+      if (data.search) {
+      result = await UserService.searchData(user, data.search, data.page, data.limit);
+    }if (!data.search) {
+      result = await UserService.filterdata(user,data);
+    } 
+  }
+  
 
   sendResponse(res, {
     success: true,
@@ -149,8 +166,8 @@ const woneReportProblem = catchAsync(async (req: Request, res: Response) => {
 const getNotifications = catchAsync(async (req: Request, res: Response) => {
   
   const user = req.user;
-  const { limit, page } = req.body;
-  const result = await UserService.getNotifications(user, {page, limit});
+  const { limit, page, date } = req.body;
+  const result = await UserService.getNotifications(user, {page, limit, date});
 
   sendResponse(res, {
     success: true,

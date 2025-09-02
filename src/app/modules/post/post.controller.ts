@@ -50,10 +50,13 @@ const updateAPost = catchAsync(
     const { ...userData } = req.body;
     const user = req.user;
 
-    const images = getMultipleFilesPath(req.files,"image")
+    if (req.files) {
+      const images = getMultipleFilesPath(req.files,"image")
+      req.body.images = images
+    }
+    // const images = getMultipleFilesPath(req.files,"image")
 
     const data = {
-      images,
       ...userData
     }
 
@@ -90,7 +93,7 @@ const favorites = catchAsync(
     const { limit, page } = req.body;
 
     const result = await PostService.getFavorite(user,limit,page);
-
+    
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -100,6 +103,26 @@ const favorites = catchAsync(
   }
 );
 
+const deletePost = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const postID = req.params.id;
+
+    if (!postID) {
+      throw new ApiError(344,"This is an error")
+    }
+    const result = await PostService.deletePost(user,postID);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully deleted the post',
+      data: result,
+    });
+  }
+);
+
+
 const addFavorites = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
@@ -108,7 +131,7 @@ const addFavorites = catchAsync(
     if (!postID) {
       throw new ApiError(344,"This is an error")
     }
-    const result = await PostService.addTofavorite(user,postID);
+    const result = await PostService.addToFavorite(user,postID);
 
     sendResponse(res, {
       success: true,
@@ -155,5 +178,5 @@ const getWonePosts = catchAsync(
 
 export const PostController = { 
   createPost,aPost,updateAPost,lastPosts,getWonePosts,
-  favorites,addFavorites,removeFavorites,
+  favorites,addFavorites,removeFavorites,deletePost
 };

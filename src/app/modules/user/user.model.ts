@@ -100,12 +100,10 @@ const userSchema = new Schema<IUser, UserModal>(
       type: Boolean,
       default: false,
     },
-    favorites: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "post"
-      }
-    ],
+    favorites: {
+      type: [Schema.Types.ObjectId],
+      ref: "post"
+    },
     complitedTasks: [
       {
         type: Schema.Types.ObjectId,

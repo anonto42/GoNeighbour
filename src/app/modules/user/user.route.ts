@@ -13,7 +13,7 @@ const router = express.Router();
 router
   .route('/profile')
   .get(auth(USER_ROLES.ADMIN, USER_ROLES.USER), UserController.getUserProfile)
-  .put(
+  .patch(
     auth(USER_ROLES.ADMIN, USER_ROLES.USER),
     fileUploadHandler(),
     (req: Request, res: Response, next: NextFunction) => {
@@ -52,7 +52,7 @@ router
   .route("/filter")
   .get(
     auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
-    validateRequest( UserValidation.filterDataZodSchema ),
+    // validateRequest( UserValidation.filterDataZodSchema ),
     UserController.filterData
   )
 

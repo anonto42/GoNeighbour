@@ -196,7 +196,27 @@ const intrigateWithBid = async (
     )
   };
 
-  if (action) {
+  if (payload.id == bid.adventurer) {
+      if (
+        bid.isAccepted_fromAdventurer == BID_STATUS.ACCEPTED || 
+        bid.isAccepted_fromAdventurer == BID_STATUS.DENY) {
+          throw new ApiError(
+            StatusCodes.NOT_ACCEPTABLE,
+            "BID was interrupted!"
+          )
+      }
+    } else {
+      if (
+        bid.isAccepted_fromQuizeGiver == BID_STATUS.ACCEPTED || 
+        bid.isAccepted_fromQuizeGiver == BID_STATUS.DENY) {
+          throw new ApiError(
+            StatusCodes.NOT_ACCEPTABLE,
+            "BID was interrupted!"
+          )
+      }
+    }
+
+  if (action == true) {
 
     const notification = await NotificationModel.create({
       for: bid.adventurer,
@@ -241,8 +261,8 @@ const intrigateWithBid = async (
     }
 
     return true;
-    
-  } else if (!action) {
+
+  } else if (action == false) {
 
     const notification = await NotificationModel.create({
       for: bid.adventurer,
