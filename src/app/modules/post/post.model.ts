@@ -42,6 +42,10 @@ const postSchema = new Schema<postInterface>({
       type: Number,
       required: true,
     },
+    address: {
+      type: String,
+      default: ""
+    },
     location: {
        type: { type: String, enum: ['Point'], default: 'Point' },
        coordinates: { type: [Number], required: false },

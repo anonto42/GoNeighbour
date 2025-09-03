@@ -15,6 +15,7 @@ export type postInterface = {
     //         coordinates: []
     //     }         
     // }
+    address: string
     location: {
             type: string,
             coordinates: number[]

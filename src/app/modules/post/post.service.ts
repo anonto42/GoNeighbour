@@ -41,6 +41,9 @@ const createPost = async (
                 `Already post exist on the named: ${data.title}`
             )
         }
+
+        data.address = data.location
+
         const createdPost = await Post.create(data);
 
         user.totalPosts.push(createdPost._id);
@@ -146,6 +149,7 @@ const lastPosts = async (
 
     const posts = await Post.find({ createdBy: userFromDB._id })
         .populate("createdBy","name email image")
+        .select(" -lat -lot")
         .skip(skipCount)
         .limit(limit)
         .sort({ createdAt: -1 });

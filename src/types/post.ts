@@ -8,6 +8,7 @@ export type postT = {
     deadline: Date,
     images: string[],
     location: any
+    address: string
 }
 
 export type updatePostT = {
