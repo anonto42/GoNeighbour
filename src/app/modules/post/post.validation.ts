@@ -26,7 +26,9 @@ const updatePostZodSchema = z.object({
     location: z.any().optional(),
     lat: z.any().optional(),
     lon: z.any().optional(),
-    image: z.any().optional()
+    image: z.any().optional(),
+    oldImages: z.any().optional()
+    // oldImages: z.array(z.array(z.string())).optional()
   })
 });
 

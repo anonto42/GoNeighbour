@@ -34,13 +34,13 @@ const createPost = async (
         
         data.createdBy = new Types.ObjectId( user._id )
 
-        const isPostExist = await Post.findOne({title: data.title});
-        if (isPostExist) {
-            throw new ApiError(
-                StatusCodes.BAD_REQUEST,
-                `Already post exist on the named: ${data.title}`
-            )
-        }
+        // const isPostExist = await Post.findOne({title: data.title});
+        // if (isPostExist) {
+        //     throw new ApiError(
+        //         StatusCodes.BAD_REQUEST,
+        //         `Already post exist on the named: ${data.title}`
+        //     )
+        // }
 
         data.address = data.location
 
@@ -101,42 +101,73 @@ const aPost = async (
     return isPostExist
 };
 
-const updatedPost = async (
-    payload: JwtPayload,
-    data: updatePostT
-) => {
-    try {
+const updatedPost = async (payload: JwtPayload, data: updatePostT) => {
+  await User.isValidUser(payload.id);
 
-        await User.isValidUser(payload.id);
+  const isPostExist = await Post.findById(data.postId);
+  if (!isPostExist) throw new ApiError(StatusCodes.BAD_REQUEST, "Post not found");
 
-        const isPostExist = await Post.findById(data.postId);
-        if (!isPostExist) {
-            throw new ApiError(
-                StatusCodes.BAD_REQUEST,
-                `Post not founded to update!`
-            )
-        }
-        const createdPost = await Post.findByIdAndUpdate(data.postId,data,{ new: true });
-        
-        // if (data.images && data.images.length > 0) {
-        //     isPostExist.images.map( e => unlinkFile(e) );
-        // }
-        
-        return createdPost
-        
-    } catch (error: any) {
+//   function stringToArray(str: string): string[] {
+//     if (!str) return [];
+//     let cleaned = str.trim().replace(/,\s*]$/, "]");
+//     try { return JSON.parse(cleaned); } 
+//     catch { 
+//       const matches = cleaned.match(/"([^"]+)"/g);
+//       return matches ? matches.map(s => s.replace(/"/g, "")) : [];
+//     }
+//   }
 
-        console.log(error)
-        if (data.images && data.images.length > 0) {
-            data.images.map( e => unlinkFile(e) );
-        }
-
-        throw new ApiError(
-            error.status,
-            error.message
-        )
+    if(
+        typeof (data.oldImages) === "string"
+    ){
+        data.oldImages = [data.oldImages]
+    } else {
+        data.oldImages = data.oldImages
     }
+
+
+    if (data.images && data.oldImages) {
+            if (data.images.length > 0) {
+                if (data.oldImages.length > 0) {
+                isPostExist.images = [
+                    ...data.oldImages,
+                    ...data.images
+                ]
+            }
+        }
+    } else if (data.oldImages) {
+        if (data.oldImages.length > 0) {
+            isPostExist.images = [
+                ...data.oldImages
+                ]
+            }
+        }
+
+    if (data.title) isPostExist.title = data.title;
+    if (data.amount) isPostExist.amount = data.amount;
+
+    if (data.location && typeof data.location === "object") {
+        isPostExist.location = data.location;
+    }
+
+    //@ts-ignore
+    if (data.deadline) isPostExist.deadline = parseNullableDate(data.deadline);
+    //@ts-ignore
+    if (data.work_time) isPostExist.work_time = parseNullableDate(data.work_time);
+    //@ts-ignore
+    if (data.location) isPostExist.address = data.location;
+    if (data.lat) isPostExist.lat = data.lat;
+    if (data.lot) isPostExist.lot = data.lot;
+    if (data.description) isPostExist.description = data.description;
+
+    await isPostExist.save();
 };
+
+function parseNullableDate(value: string | null | undefined) {
+  if (!value || value === "null") return undefined;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? undefined : d;
+}
 
 const lastPosts = async (
     user: JwtPayload,

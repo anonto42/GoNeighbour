@@ -19,7 +19,8 @@ export type updatePostT = {
     amount: number,
     work_time: Date,
     deadline: Date,
-    images: string[],
+    images: any,
+    oldImages: any,
     location: any,
     lat: number,
     lot: number
