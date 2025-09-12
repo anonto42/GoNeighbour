@@ -2,8 +2,7 @@ import { z } from 'zod';
 
 const createChatZodSchema = z.object({
   body: z.object({
-    receiver: z.string({ required_error: 'You must give the receiver id to start the caht!' }),
-    chatName: z.string({ required_error: "You must give the chat Name!"})
+    receiver: z.string({ required_error: 'You must give the receiver id to start the caht!' })
   }),
 });
 

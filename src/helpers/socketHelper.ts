@@ -15,7 +15,6 @@ const socket = (io: Server) => {
       connectedUsers.set(userID, socket.id);
       logger.info(colors.cyan(`User ${userID} connected with socket ${socket.id}`));
     });
-
     
     socket.on("location", (data: LLocation) => {
       if (!data.room || !data.userID || !data.lat || !data.lon) {

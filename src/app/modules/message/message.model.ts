@@ -10,9 +10,17 @@ const messageSchema = new Schema<IMessage>({
         type: String,
         required: true
     },
+    typeOf: {
+        type: String,
+        enum: [ "MESSAGE" , "IMAGE"]
+    },
     sender: {
         type: Types.ObjectId,
         ref: "user"
+    },
+    isSeen:{
+        type: Boolean,
+        default: false
     }
 },{
     timestamps: true

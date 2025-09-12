@@ -100,6 +100,18 @@ const userSchema = new Schema<IUser, UserModal>(
       type: Boolean,
       default: false,
     },
+    gender: {
+      type: String,
+      default:""
+    },
+    dob: {
+      type: String,
+      default: ""
+    },
+    skills: {
+      type: [String],
+      default: []
+    },
     favorites: {
       type: [Schema.Types.ObjectId],
       ref: "post"
@@ -107,7 +119,7 @@ const userSchema = new Schema<IUser, UserModal>(
     complitedTasks: [
       {
         type: Schema.Types.ObjectId,
-        ref: "bid"
+        ref: "task"
       }
     ],
     reviews:[
@@ -167,7 +179,7 @@ userSchema.statics.isValidUser = async (id: string) => {
   const objID = new mongoose.Types.ObjectId(id);
   const isExist = await User  
                         .findById( objID)
-                        .select("-password -authentication -__v -updatedAt -createdAt")
+                        .select("-password -authentication -__v -updatedAt -createdAt -totalPosts -paymentValidation")
                         .lean()
                         .exec();
 

@@ -23,6 +23,13 @@ router
   )
 
 router
+  .route("/requests/:id")
+  .delete(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER),
+    BidController.deleteBid
+  )
+
+router
   .route("/requests/adventurer")
   .get(
     auth( USER_ROLES.ADMIN, USER_ROLES.USER ),

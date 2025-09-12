@@ -89,7 +89,7 @@ const aPost = async (
 
     const isPostExist = await Post
                                 .findById(postId)
-                                .populate("createdBy","reviews image email name -_id")
+                                .populate("createdBy","reviews image email name _id")
                                 .select("-lat -lot -__v -location")
     if (!isPostExist) {
         throw new ApiError(
@@ -258,7 +258,6 @@ const getFavorite = async (
     .skip(skipCount)
     .limit(limit)
     .lean();
-    console.log(favorites)
 
   return favorites.map((fav: any) => ({
     ...fav,
@@ -283,11 +282,19 @@ const removeFromFavorite = async (
         )
     }
 
+    const isFavorite = user.favorites.includes(id);
+    if (!isFavorite) {
+        throw new ApiError(
+            StatusCodes.BAD_REQUEST,
+            "Post not found in favorites!"
+        );
+    }
+
     user.favorites = user.favorites.filter( e => e != id );
 
     user.save();
 
-    return true
+    return false
 };
 
 export const PostService = {

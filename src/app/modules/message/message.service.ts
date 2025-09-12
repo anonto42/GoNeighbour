@@ -5,7 +5,6 @@ import { User } from '../user/user.model';
 import { ChatRoom } from '../chat/chat.model';
 import { Message } from './message.model';
 import mongoose from 'mongoose';
-import { socketMessage } from '../../../types/message';
 import { socketHelper } from '../../../helpers/socketHelper';
 
 const sendMessage = async (
@@ -13,11 +12,28 @@ const sendMessage = async (
   messageBody: {
     chatID: string;
     content: string;
+    type: "MESSAGE" | "IMAGE"
   },
   image?: string
 ) => {
   const user = await User.isValidUser(payload.id);
-  const chat = await ChatRoom.findById(messageBody.chatID);
+  const chat = await ChatRoom.findById(messageBody.chatID)
+
+  // let chats = await ChatRoom.findById(messageBody.chatID)
+  //     .populate("participants", "email name image")
+  //     .populate("lastMessage")
+  //     .lean();
+  
+  //     //@ts-ignore
+  //   chats = {
+  //     ...chats,
+  //     //@ts-ignore
+  //     participants: chats.participants.filter(
+  //       (p: any) => p._id.toString() !== user._id.toString()
+  //     ),
+  //   };
+
+  //   console.log(chats);
 
   if (!user) {
     throw new ApiError(StatusCodes.NOT_FOUND, "user not found");
@@ -31,17 +47,26 @@ const sendMessage = async (
     sender: user._id,
     chatRoom: chat._id,
     content: image ? image : messageBody.content,
+    typeOf: messageBody.type,
   });
+
+  chat.lastMessage = message._id;
+  await chat.save();
+
 
   const populatedMessage = await message.populate("sender", "name email");
 
   // @ts-ignore
   const io = global.io;
 
-  const socketMessage: socketMessage = {
-    message: message.content,
+  const socketMessage = {
+    content: message.content,
     chatId: message.chatRoom,
-    sender: message.sender
+    sender: message.sender,
+    typeOf: message.typeOf,
+    _id: message._id,
+    //@ts-ignore
+    createdAt: message.createdAt
   }
 
   // Emit the message to all users in the chat except the sender
@@ -50,6 +75,7 @@ const sendMessage = async (
       const targetSocketId = socketHelper.connectedUsers.get(userId.toString());
       if (targetSocketId) {
         io.to(targetSocketId).emit(`socket:message:${userId}`, socketMessage);
+        io.to(targetSocketId).emit(`socket:chat:${userId}`, socketMessage);
       }
     }
   }
@@ -59,40 +85,52 @@ const sendMessage = async (
 
 const getMessages = async (
   userID: any,
-  chatId: any, 
+  chatId: any,
   options: {
-    limit?: number; 
-    page?: number
+    limit?: number;
+    page?: number;
   }
 ) => {
-  
   const { limit = 10, page = 1 }: { limit?: number; page?: number } = options;
   await User.isValidUser(userID);
- 
-    const totalResults = await Message.countDocuments({ chatRoom: chatId });
-    const totalPages = Math.ceil(totalResults / limit);
-    const pagination = { totalResults, totalPages, currentPage: page, limit };
- 
-    const skip = (page - 1) * limit;
-    const chatObjectId = new mongoose.Types.ObjectId(chatId);
 
-    const messages = await Message.find({ chatRoom: chatObjectId })
+  const chatObjectId = new mongoose.Types.ObjectId(chatId);
+  const totalResults = await Message.countDocuments({ chatRoom: chatObjectId });
+
+  if (!totalResults) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "No messages exist in this chat room"
+    );
+  }
+
+  const totalPages = Math.ceil(totalResults / limit);
+  const pagination = { totalResults, totalPages, currentPage: page, limit };
+
+  const skip = (page - 1) * limit;
+
+  const messages = await Message.find({ chatRoom: chatObjectId })
     .sort({ createdAt: -1 })
-    .skip(skip) 
-    .limit(limit) 
-    .populate('sender', '_id name image email')
-    .exec();   
-    if (!totalResults) {
-      throw new ApiError(
-        StatusCodes.NOT_FOUND,
-        "No messages are exist on this chat room"
-      )
-    }
- 
-    return { 
-      messages, 
-      pagination 
-    };
+    .skip(skip)
+    .limit(limit)
+    .populate("sender", "_id name image email")
+    .exec();
+
+  const messageIdsToUpdate = messages
+    .filter((msg: any) => msg.sender._id.toString() !== userID.toString() && !msg.isSeen)
+    .map((msg) => msg._id);
+
+  if (messageIdsToUpdate.length > 0) {
+    await Message.updateMany(
+      { _id: { $in: messageIdsToUpdate } },
+      { $set: { isSeen: true } }
+    );
+  }
+
+  return {
+    messages,
+    pagination,
+  };
 };
 
 const deleteMessage = async (id: string) => {

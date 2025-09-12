@@ -7,8 +7,7 @@ import mongoose from 'mongoose';
 const createChat = async (
   sender: any, 
   chatInfo: {
-    receiver: any,
-    chatName: string
+    receiver: any
   }, 
 ) => {
 
@@ -30,7 +29,6 @@ const createChat = async (
 
   if (!isChatExist) {
     const chatRoom = await ChatRoom.create({
-      chatName: chatInfo.chatName,
       participants: [
         sender,
         chatInfo.receiver
@@ -58,35 +56,33 @@ const getChatById = async ( id: string ) => {
 };
 
 const allChats = async (
-  data:{
-    id: string, 
-    page: number, 
+  data: {
+    id: string,
+    page: number,
     limit: number
   }
-  ) => {
-  const { id, page = 1, limit = 10} = data;
+) => {
+  const { id, page = 1, limit = 10 } = data;
 
-  await User.isValidUser(id);
+  const user = await User.isValidUser(id);
 
   const skip = (page - 1) * limit;
 
-  const chats = await ChatRoom.find({
+  let chats = await ChatRoom.find({
     participants: { $in: [id] }
   })
     .populate("participants", "email name image")
-    .skip(skip)
-    .limit(limit);
+    .populate("lastMessage")
+    .lean();
 
-  const totalChats = await ChatRoom.countDocuments({
-    participants: { $in: [id] }
-  });
+  chats = chats.map(chat => ({
+    ...chat,
+    participants: chat.participants.filter(
+      (p: any) => p._id.toString() !== id.toString()
+    ),
+  }));
 
-  return {
-    chats,
-    totalChats,
-    currentPage: page,
-    totalPages: Math.ceil(totalChats / limit),
-  };
+  return chats
 };
 
 const deleteChat = async ( userID: string, id: string ) => {

@@ -80,7 +80,7 @@ const loginUserFromDB = async (payload: ILoginData) => {
     expireAt: expireAt
   })
   
-  return { accessToken: createToken, refreshToken };
+  return { accessToken: createToken, refreshToken, userId: isExistUser._id };
 };
 
 // refresh access token

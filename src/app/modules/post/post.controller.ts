@@ -123,7 +123,6 @@ const deletePost = catchAsync(
   }
 );
 
-
 const addFavorites = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
@@ -156,7 +155,7 @@ const removeFavorites = catchAsync(
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'Successfully added on the favorites!',
+      message: 'Successfully removed from the favorites!',
       data: result,
     });
   }

@@ -4,7 +4,8 @@ const sendMessage = z.object({
   body: z.object({
     chatID: z.string({ required_error: 'you must give the chat id to send the mesage!' }),
     content: z.string().optional(),
-    image: z.string().optional()
+    image: z.string().optional(),
+    // typeOf: z.enum(["MESSAGE" , "IMAGE"]).optional()
   }),
 });
 

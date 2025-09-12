@@ -21,6 +21,9 @@ export type IUser = {
   balance: number;
   firstWithdrawal: boolean;
   lastSession: string;
+  gender: string;
+  dob: string;
+  skills: string[];
   complitedTasks: Types.ObjectId[];
   paymentValidation: {
     accountID: string;

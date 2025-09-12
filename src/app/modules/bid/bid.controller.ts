@@ -20,6 +20,22 @@ const sendBid = catchAsync(async (
   });
 });
 
+const deleteBid = catchAsync(async (
+  req: Request, 
+  res: Response
+) => {
+  const user = req.user
+  const id = req.params.id
+  const result = await BidService.removeBid(user,id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Bid send successfully!",
+    data: result,
+  });
+});
+
 const bidRequestes = catchAsync(async (
   req: Request, 
   res: Response
@@ -106,5 +122,6 @@ export const BidController = {
   intrigateWithBid,
   bidRequestesAsAdvengrar,
   paytheBid,
-  cancelTask
+  cancelTask,
+  deleteBid
 };

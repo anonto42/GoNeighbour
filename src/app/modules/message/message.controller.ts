@@ -14,8 +14,12 @@ const send = catchAsync(async (
 
   const image = getSingleFilePath(req.files, "image");
   if (image) {
+    verifyData.type = "IMAGE"
     verifyData.content = image
+  } else{
+    verifyData.type = 'MESSAGE'
   }
+
   const result = await MessageService.sendMessage(user, verifyData);
 
   sendResponse(res, {

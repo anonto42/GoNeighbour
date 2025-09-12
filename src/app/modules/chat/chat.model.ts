@@ -3,12 +3,13 @@ import { ChatModel, IChat } from "./chat.interface";
 
 
 const chatRoom = new Schema<IChat, ChatModel>({
-    name: {
-        type: String
-    },
     participants:{
         type: [Schema.Types.ObjectId],
         ref: "user"
+    },
+    lastMessage:{
+        type: Schema.Types.ObjectId,
+        ref: "message"
     }
 },{
     timestamps: true

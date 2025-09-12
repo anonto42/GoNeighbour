@@ -19,6 +19,8 @@ import { NotificationModel } from '../notification/notification.model';
 import { socketHelper } from '../../../helpers/socketHelper';
 import mongoose, { Types } from 'mongoose';
 import { startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears  } from 'date-fns';
+import { Task } from '../task/task.model';
+import { Reating } from '../rating/rating.model';
 
 const createUserToDB = async (payload: Partial<register>): Promise<any> => {
   await User.isExistUserByEmail(payload.email!);
@@ -83,6 +85,7 @@ const updateProfileToDB = async (
   user: JwtPayload,
   payload: Partial<IUser>
 ) => {
+  console.log({payload})
   try {
     const { id } = user;
     const isExistUser = await User.isValidUser(id);
@@ -95,6 +98,8 @@ const updateProfileToDB = async (
     const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {
       new: true,
     }).select("-password -verified -authentication").lean().exec();
+
+    console.log(updateDoc)
   
     // unlinkFile(payload.image!)
     return updateDoc;
@@ -195,7 +200,8 @@ const home_data = async (
 
   const skipCount = (page - 1) * limit;
 
-  const posts = await Post.find({})
+  const posts = await Post.find({ createdBy: { $ne: user._id }})
+    .populate("createdBy", "name image")
     .skip(skipCount)
     .limit(limit)
     .lean();
@@ -314,62 +320,100 @@ const getNotifications = async (
   }
 ) => {
   const userFromDB = await User.isValidUser(user.id);
+
   const skipCount = (option.page - 1) * option.limit;
 
-  if (option.date === "Select") {
-    return await NotificationModel.find({ for: userFromDB._id })
-      .populate("for", "name email image")
-      .populate("from", "name email image")
-      .skip(skipCount)
-      .limit(option.limit);
-  }
-
-  let startDate: Date;
-  let endDate: Date;
-
   const now = new Date();
+  let startDate: Date = new Date(0);
+  let endDate: Date = now;
 
   switch (option.date) {
     case "weekly":
-      console.log("Fetching last week's notifications");
       const lastWeek = subWeeks(now, 1);
-      startDate = startOfWeek(lastWeek, { weekStartsOn: 1 }); // Monday
+      startDate = startOfWeek(lastWeek, { weekStartsOn: 1 });
       endDate = endOfWeek(lastWeek, { weekStartsOn: 1 });
       break;
 
     case "monthly":
-      console.log("Fetching last month's notifications");
       const lastMonth = subMonths(now, 1);
       startDate = startOfMonth(lastMonth);
       endDate = endOfMonth(lastMonth);
       break;
 
     case "yearly":
-      console.log("Fetching last year's notifications");
       const lastYear = subYears(now, 1);
       startDate = startOfYear(lastYear);
       endDate = endOfYear(lastYear);
       break;
 
     default:
-      startDate = new Date(0); // Fallback to fetch all
-      endDate = now;
+      break;
   }
 
-  return await NotificationModel.find({
-      for: userFromDB._id,
-      createdAt: { $gte: startDate, $lt: endDate }
-    })
+  const filter: any = { for: userFromDB._id };
+  if (option.date !== "Select") {
+    filter.createdAt = { $gte: startDate, $lt: endDate };
+  }
+
+  const totalDocs = await NotificationModel.countDocuments(filter);
+
+  const notifications = await NotificationModel.find(filter)
     .populate("for", "name email image")
     .populate("from", "name email image")
+    .sort({ createdAt: -1 })
     .skip(skipCount)
     .limit(option.limit);
+
+ // Only unread notifications
+  const unreadIds = notifications
+    .filter(n => !n.isRead)             // filter unread
+    .map(n => new mongoose.Types.ObjectId(n._id)); // ensure ObjectId type
+
+  if (unreadIds.length > 0) {
+    const result = await NotificationModel.updateMany(
+      { _id: { $in: unreadIds } },
+      { $set: { isRead: true, readAt: new Date() } }
+    );
+    console.log("Notifications marked as read:", result.modifiedCount);
+  } else {
+    console.log("No unread notifications to mark as read");
+  }
+
+  const totalUnread = await NotificationModel.countDocuments({
+    isRead: false,
+    for: userFromDB._id
+  })
+
+  return {
+    data: notifications,
+    meta: {
+      totalDocs,
+      totalPages: Math.ceil(totalDocs / option.limit),
+      currentPage: option.page,
+      pageSize: option.limit,
+      hasNextPage: option.page * option.limit < totalDocs,
+      hasPrevPage: option.page > 1,
+    },
+    totalUnread
+  };
 };
 
+const getUnreadCount = async (userId: string) => {
+  const count = await NotificationModel.countDocuments({
+    for: userId,
+    isRead: false,
+  });
+  
+  return count == 0 ? 10 : count
+};
+
+
 const giveReview = async (
+  userJWt: JwtPayload,
   data: giveReviewType
 ) => {
 
+  const from = await User.findById(userJWt.id) as any;
   const userObj = new Types.ObjectId(data.user_id);
   const user = await User.findById(userObj);
 
@@ -377,12 +421,17 @@ const giveReview = async (
     throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
   };
 
-  const review = {
+  const review: any = {
     star: data.star,
     comment: data.comment,
-    from: data.from,
+    from: from.name,
     createdAt: new Date( Date.now() )
   };
+
+  review.asAProvider = data.asAProvider == "true" ? true:false;
+  review.for = userObj
+
+  await Reating.create(review)
 
   user.reviews.push(review);  
   await user.save();
@@ -397,35 +446,76 @@ const getAProfile = async (
   
   const userObj = new Types.ObjectId(id);
   const user = await User.findById(userObj)
-                         .populate({
-                          path: "complitedTasks",
-                          populate: {
-                            path: "service",
-                            select: "_id title amount"
-                          }
-                         })
-                         .populate({
-                          path: "complitedTasks",
-                          populate: {
-                            path: "adventurer",
-                            select: "_id name email image"
-                          }
-                         })
-                         .populate({
-                          path: "complitedTasks",
-                          populate: {
-                            path: "quizeGiver",
-                            select: "_id name email image"
-                          }
-                         })
-                         .populate("favorites")
-                         .select("-authentication -paymentValidation -bidCancelation -firstWithdrawal -searchKeywords -stats -lastSession")
+                          // .populate("complitedTasks")
+                        //  .populate({
+                        //   path: "complitedTasks",
+                        //   populate: {
+                        //     path: "service",
+                        //     select: "_id title amount"
+                        //   }
+                        //  })
+                        //  .populate({
+                        //   path: "complitedTasks",
+                        //   populate: {
+                        //     path: "adventurer",
+                        //     select: "_id name email image totalEarn"
+                        //   }
+                        //  })
+                        //  .populate({
+                        //   path: "complitedTasks",
+                        //   populate: {
+                        //     path: "quizeGiver",
+                        //     select: "_id name email image totalSpent"
+                        //   }
+                        //  })
+                         .select("-authentication -paymentValidation -bidCancelation -firstWithdrawal -searchKeywords -stats -lastSession -totalPosts -totalSpent -totalEarn -favorites -faceVerifyed -status -balance -__v -updatedAt -createdAt -user_name -role -complitedTasks ").lean()
 
   if (!user) {
     throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
   };
 
-  return user;
+  const taskAsProvider = await Task.find({provider: user._id}).populate("bid").lean();
+  const taskAsCustomer = await Task.find({customer: user._id}).populate("bid").lean();
+
+  const totalEarnAsAProvider = taskAsProvider.reduce(
+    (sum: number, e: any) => sum + (e?.bid?.offer_ammount ?? 0),
+    0
+  );
+
+  const totalEarnAsACustomer = taskAsCustomer.reduce(
+    (sum: number, e: any) => sum + (e?.bid?.offer_ammount ?? 0),
+    0
+  );
+
+  const reviewAsAprovider = await Reating.find({ for: user._id, asAProvider: true }).lean();
+  const reviewAsACustomer = await Reating.find({ for: user._id, asAProvider: false }).lean();
+
+  let avgRatingasACustomer = 0;
+  let avgRatingasAProvider = 0;
+
+  if (reviewAsACustomer.length > 0) {
+    const totalStars = reviewAsACustomer.reduce((sum, r) => sum + (r.star ?? 0), 0);
+    avgRatingasACustomer = totalStars / reviewAsACustomer.length;
+  }
+  if (reviewAsAprovider.length > 0) {
+    const totalStars = reviewAsAprovider.reduce((sum, r) => sum + (r.star ?? 0), 0);
+    avgRatingasAProvider = totalStars / reviewAsAprovider.length;
+  }
+
+
+  return {
+    ...user,
+    asAProvider:{
+      complitedTask: taskAsProvider.length,
+      totalEarnAsAProvider,
+      avgRatingasAProvider
+    },
+    asACustomer:{
+      complitedCustomer: taskAsCustomer.length,
+      totalEarnAsACustomer,
+      avgRatingasACustomer
+    }
+  };
 }
 
 const deleteUser = async (
@@ -440,11 +530,106 @@ const deleteUser = async (
   return true;
 }
 
+export interface QueryOptions {
+  page?: number;
+  limit?: number;
+  keyword?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  maxDistance?: number;
+  userLat?: number;
+  userLng?: number;
+}
+
+const getPosts = async (
+  payload: JwtPayload,
+  options: {
+    keyword?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    maxDistance?: number;
+    userLat?: number | null;
+    userLng?: number | null;
+    page?: number;
+    limit?: number;
+  }
+) => {
+  const {
+    keyword,
+    minPrice,
+    maxPrice,
+    maxDistance= 0.0,
+    userLat,
+    userLng,
+    page = 1,
+    limit = 10,
+  } = options;
+
+  const skip = (page - 1) * limit;
+  const query: any = { createdBy: { $ne: payload.id } };
+
+  if (keyword && keyword.trim() !== "") {
+    const sanitizedKeyword = keyword.trim();
+    const escapedKeyword = sanitizedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    query.$or = [
+      { title: { $regex: escapedKeyword, $options: 'i' } }
+    ];
+  }
+
+  if (typeof minPrice === "number" || typeof maxPrice === "number") {
+    query.amount = {
+      $gte: typeof minPrice === "number" ? minPrice : 0,
+      $lte: typeof maxPrice === "number" ? maxPrice : Number.MAX_SAFE_INTEGER,
+    };
+  }
+
+  const isValidNumber = (n: any) => typeof n === "number" && !isNaN(n);
+  if (isValidNumber(maxDistance) && isValidNumber(userLat) && isValidNumber(userLng)) {
+    query.location = {
+      $geoWithin: {
+        $centerSphere: [[userLng!, userLat!], maxDistance / 6378137],
+      },
+    };
+  }
+
+  let posts = await Post.find(query)
+    .populate("createdBy", "name image")
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const user = await User.findById(payload.id).select("favorites");
+  const favoriteSet = new Set(user?.favorites.map(fav => fav.toString()));
+  posts = posts.map(post => ({
+    ...post,
+    isFavorite: favoriteSet.has(post._id.toString()),
+  }));
+
+  const total = await Post.countDocuments(query);
+
+  if (posts.length === 0 && (!keyword || keyword.trim() === "") && !isValidNumber(maxDistance) && minPrice == null && maxPrice == null) {
+    const randomPosts = await Post.aggregate([{ $sample: { size: limit } }]);
+    return {
+      posts: randomPosts.map(post => ({
+        ...post,
+        isFavorite: favoriteSet.has(post._id.toString()),
+      })),
+      total: randomPosts.length,
+      page,
+      limit,
+    };
+  }
+
+  return { posts, total, page, limit };
+};
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
   updateProfileToDB,
   searchData,
+  getPosts,
   getTopSearchedKeywords,
   home_data,
   userReport_request,
@@ -453,5 +638,6 @@ export const UserService = {
   getNotifications,
   giveReview,
   getAProfile,
-  deleteUser
+  deleteUser,
+  getUnreadCount
 };

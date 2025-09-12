@@ -18,5 +18,5 @@ export type giveReviewType = {
     user_id: string;
     star: number;
     comment: string;
-    from: string;
+    asAProvider: string;
 }

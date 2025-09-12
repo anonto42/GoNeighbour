@@ -16,7 +16,10 @@ const updateUserZodSchema = z.object({
     contact: z.string().optional(),
     email: z.string().optional(),
     location: z.string().optional(),
-    image: z.string().optional()
+    image: z.string().optional(),
+    gender: z.string().optional(),
+    dob: z.string().optional(),
+    skills: z.array( z.string()).optional()
   })
 });
 
@@ -43,7 +46,7 @@ const giveReviewZodSchema = z.object({
     user_id: z.string({required_error: "You must give the user id!"}),
     star: z.number({required_error: "You must give the star number!"}),
     comment: z.string({required_error: "You must give the comment!"}),
-    from: z.string({required_error: "You must give the from!"})
+    // from: z.string({required_error: "You must give the from!"})
   })
 });
 

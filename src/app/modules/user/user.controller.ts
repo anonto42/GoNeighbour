@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import { getSingleFilePath } from '../../../shared/getFilePath';
 import sendResponse from '../../../shared/sendResponse';
-import { UserService } from './user.service';
+import { QueryOptions, UserService } from './user.service';
 import ApiError from '../../../errors/ApiError';
 import { Post } from '../post/post.model';
 
@@ -92,8 +92,9 @@ const top10KeyWords = catchAsync(async (req: Request, res: Response) => {
 const homeData = catchAsync(async (req: Request, res: Response) => {
   
   const user = req.user;
-  const { limit, page } = req.body;
-  const result = await UserService.home_data(user, page, limit);
+  const { ...data }: QueryOptions = req.body;
+
+  const result = await UserService.getPosts(user,data);
 
   sendResponse(res, {
     success: true,
@@ -166,8 +167,14 @@ const woneReportProblem = catchAsync(async (req: Request, res: Response) => {
 const getNotifications = catchAsync(async (req: Request, res: Response) => {
   
   const user = req.user;
-  const { limit, page, date } = req.body;
-  const result = await UserService.getNotifications(user, {page, limit, date});
+  const { limit, page, date, count } = req.body;
+  let result;
+
+  if (count === "true") {
+    result = await UserService.getUnreadCount(user.id)
+  } else {
+    result = await UserService.getNotifications(user, {page, limit, date});
+  }
 
   sendResponse(res, {
     success: true,
@@ -180,7 +187,8 @@ const getNotifications = catchAsync(async (req: Request, res: Response) => {
 const giveReview = catchAsync(async (req: Request, res: Response) => {
   
   const { ...data } = req.body;
-  const result = await UserService.giveReview(data);
+  const user = req.user;
+  const result = await UserService.giveReview(user,data);
 
   sendResponse(res, {
     success: true,
