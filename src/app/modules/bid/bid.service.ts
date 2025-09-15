@@ -198,23 +198,23 @@ const bidRequesteAsAdvengerer = async (
   const user = await User.isValidUser(payload.id);
 
 
-  const bidCreate = await Bid.find({adventurer: user._id})
-                              .populate({
-                                path: 'service',
-                                select: ' _id title amount',
-                              })
-                              .populate({
-                                path: 'createdBy',
-                                select: ' _id name email image',
-                              })
-                              .populate({
-                                path: 'adventurer',
-                                select: ' _id name email image',
-                              })
-                              .populate({
-                                path: 'quizeGiver',
-                                select: ' _id name email image',
-                              })
+  // const bidCreate = await Bid.find({adventurer: user._id})
+  //                             .populate({
+  //                               path: 'service',
+  //                               select: ' _id title amount',
+  //                             })
+  //                             .populate({
+  //                               path: 'createdBy',
+  //                               select: ' _id name email image',
+  //                             })
+  //                             .populate({
+  //                               path: 'adventurer',
+  //                               select: ' _id name email image',
+  //                             })
+  //                             .populate({
+  //                               path: 'quizeGiver',
+  //                               select: ' _id name email image',
+  //                             })
 
   const { page= 1, limit=10 } = data;
 
@@ -224,23 +224,23 @@ const bidRequesteAsAdvengerer = async (
       const requests = await Bid.find({ 
         adventurer: user._id, 
       })
-      .populate({
-        path: 'adventurer',
-        select: ' _id name image location',
-      })
+      // .populate({
+      //   path: 'adventurer',
+      //   select: ' _id name image location',
+      // })
       .populate({
         path: 'service',
-        select: ' _id title amount',
+        select: ' _id title amount images description createdAt location address',
       })
       .populate({
         path: 'createdBy',
         select: '_id name image location',
       })
-      .populate({
-        path: 'quizeGiver',
-        select: '_id name image location',
-      })
-      .select("-service -updatedAt -createdAt -__v -createdBy -quizeGiver")
+      // .populate({
+      //   path: 'quizeGiver',
+      //   select: '_id name image location',
+      // })
+      .select("-updatedAt -createdAt -__v -createdBy -quizeGiver -adventurer")
       .skip(skipCount)
       .limit(limit)
       .lean();
@@ -250,24 +250,23 @@ const bidRequesteAsAdvengerer = async (
       const requests = await Bid.find({ 
         adventurer: user._id, 
         isAccepted_fromQuizeGiver: BID_STATUS.WATING
-      })
-      .populate({
-        path: 'adventurer',
-        select: ' _id name image location',
-      })
+      })// .populate({
+      //   path: 'adventurer',
+      //   select: ' _id name image location',
+      // })
       .populate({
         path: 'service',
-        select: ' _id title amount',
+        select: ' _id title amount images description createdAt location address',
       })
       .populate({
         path: 'createdBy',
         select: '_id name image location',
       })
-      .populate({
-        path: 'quizeGiver',
-        select: '_id name image location',
-      })
-      .select("-service -updatedAt -createdAt -__v -createdBy -quizeGiver")
+      // .populate({
+      //   path: 'quizeGiver',
+      //   select: '_id name image location',
+      // })
+      .select("-updatedAt -createdAt -__v -createdBy -quizeGiver -adventurer")
       .skip(skipCount)
       .limit(limit)
       .lean();
@@ -278,23 +277,23 @@ const bidRequesteAsAdvengerer = async (
         adventurer: user._id, 
         isAccepted_fromQuizeGiver: BID_STATUS.ACCEPTED
       })
-      .populate({
-        path: 'adventurer',
-        select: ' _id name image location',
-      })
+      // .populate({
+      //   path: 'adventurer',
+      //   select: ' _id name image location',
+      // })
       .populate({
         path: 'service',
-        select: ' _id title amount',
+        select: ' _id title amount images description createdAt location address',
       })
       .populate({
         path: 'createdBy',
         select: '_id name image location',
       })
-      .populate({
-        path: 'quizeGiver',
-        select: '_id name image location',
-      })
-      .select("-service -updatedAt -createdAt -__v -createdBy -quizeGiver")
+      // .populate({
+      //   path: 'quizeGiver',
+      //   select: '_id name image location',
+      // })
+      .select("-updatedAt -createdAt -__v -createdBy -quizeGiver -adventurer")
       .skip(skipCount)
       .limit(limit)
       .lean();
@@ -305,23 +304,23 @@ const bidRequesteAsAdvengerer = async (
         quizeGiver: user._id, 
         isPaid: true
       })
-      .populate({
-        path: 'adventurer',
-        select: ' _id name image location',
-      })
+      // .populate({
+      //   path: 'adventurer',
+      //   select: ' _id name image location',
+      // })
       .populate({
         path: 'service',
-        select: ' _id title amount',
+        select: ' _id title amount images description createdAt location address',
       })
       .populate({
         path: 'createdBy',
         select: '_id name image location',
       })
-      .populate({
-        path: 'quizeGiver',
-        select: '_id name image location',
-      })
-      .select("-service -updatedAt -createdAt -__v -createdBy -quizeGiver")
+      // .populate({
+      //   path: 'quizeGiver',
+      //   select: '_id name image location',
+      // })
+      .select("-updatedAt -createdAt -__v -createdBy -quizeGiver -adventurer")
       .skip(skipCount)
       .limit(limit)
       .lean();
