@@ -19,6 +19,9 @@ const sendBid = async (
 ) => {
   const { id } = payload;
 
+  // Is Allready exist at panding
+
+
   const userObjId = new mongoose.Types.ObjectId(id);
   const sender = await User.findById(userObjId);
   if (!sender) {
@@ -37,61 +40,124 @@ const sendBid = async (
     )
   }
   
-  const objID = new mongoose.Types.ObjectId(data.postID);
- 
-  const post = await Post.findById(objID).lean().exec();
-  if (!post) {
-    throw new ApiError(
-      StatusCodes.NOT_FOUND,
-      "Post was not found!"
-    )
-  };
-
-  const adventurer = post.createdBy != sender._id ? sender._id : post.createdBy;
-  const quizeGiver = post.createdBy == sender._id ? sender._id : post.createdBy;
-
-  const bid = await Bid.create({
-    adventurer: adventurer,
-    quizeGiver: quizeGiver,
-    offer_ammount: post.amount,
-    createdBy: payload.id,
-    reason: data.reason,
-    service: post._id,
-    isAccepted_fromAdventurer: adventurer == id ? BID_STATUS.ACCEPTED : BID_STATUS.WATING,
-    isAccepted_fromQuizeGiver: quizeGiver == id ? BID_STATUS.ACCEPTED : BID_STATUS.WATING
-  })
-  if (!bid) {
-    throw new ApiError(
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      "Can't create a bid!"
-    )
-  }
-
-  const notification = await NotificationModel.create({
-    for: post?.createdBy,
-    from: sender._id,
-    title: `You got a bid from ${sender.name}`,
-    discription: `${data.reason}`
-  });
-  if (!notification) {
-    throw new ApiError(
-      StatusCodes.NOT_ACCEPTABLE,
-      "Notification not created!"
-    )
-  }
-
-  const populateNotification = await NotificationModel.findById(notification._id).populate("from", "name email image").populate("for", "name email image").lean();
-
-  const targetSocketId = socketHelper.connectedUsers.get(post!.createdBy!.toString());
+  if (data.bidOn == "POST" ) {
+    const objID = new mongoose.Types.ObjectId(data.postID);
+    const post = await Post.findById(objID).lean().exec();
+    if (!post) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        "Post was not found!"
+      )
+    };
   
-  // @ts-ignore
-  const io = global.io;
+    const adventurer = post.createdBy != sender._id ? sender._id : post.createdBy;
+    const quizeGiver = post.createdBy == sender._id ? sender._id : post.createdBy;
+  
+    const bid = await Bid.create({
+      adventurer: adventurer,
+      quizeGiver: quizeGiver,
+      offer_ammount: post.amount,
+      createdBy: payload.id,
+      reason: data.reason,
+      service: post._id
+    })
+    if (!bid) {
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        "Can't create a bid!"
+      )
+    }
+  
+    const notification = await NotificationModel.create({
+      for: post?.createdBy,
+      from: sender._id,
+      title: `You got a bid from ${sender.name}`,
+      discription: `${data.reason}`
+    });
+    if (!notification) {
+      throw new ApiError(
+        StatusCodes.NOT_ACCEPTABLE,
+        "Notification not created!"
+      )
+    }
+  
+    const populateNotification = await NotificationModel
+    .findById(notification._id)
+    .populate("from", "name email image")
+    .populate("for", "name email image")
+    .lean();
+  
+    const targetSocketId = socketHelper.connectedUsers.get(post!.createdBy!.toString());
+    
+    // @ts-ignore
+    const io = global.io;
+  
+    if (targetSocketId) {
+      io.to(targetSocketId).emit(`socket:notification:${post.createdBy}`, populateNotification);
+    }
+  
+    return notification;
+  } else if ( data.bidOn == "BID" ) {
+    const objID = new mongoose.Types.ObjectId(data.bidID);
+    const existingBId = await Bid.findById(objID)
+    if (!existingBId) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        "Your Given Bid was not exist!"
+      )
+    }
 
-  if (targetSocketId) {
-    io.to(targetSocketId).emit(`socket:notification:${post.createdBy}`, populateNotification);
+    const newBid = await Bid.create({
+      adventurer: existingBId.adventurer,
+      createdBy: userObjId,
+      service: existingBId.service,
+      reason: data.reason,
+      offer_ammount: data.amount,
+      quizeGiver: existingBId.quizeGiver,
+      lastBid: existingBId._id,
+    })
+
+    const post = await Post.findById(existingBId._id).lean().exec();
+    if (!post) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        "Post was not found!"
+      )
+    };
+
+    const notificationFor = sender._id == newBid.adventurer? newBid.quizeGiver : newBid.adventurer
+
+    const notification = await NotificationModel.create({
+      for: notificationFor,
+      from: sender._id,
+      title: `You got a bid from ${sender.name}`,
+      discription: `${data.reason}`
+    });
+    if (!notification) {
+      throw new ApiError(
+        StatusCodes.NOT_ACCEPTABLE,
+        "Notification not created!"
+      )
+    }
+  
+    const populateNotification = await NotificationModel
+    .findById(notification._id)
+    .populate("from", "name email image")
+    .populate("for", "name email image")
+    .lean();
+  
+    const targetSocketId = socketHelper.connectedUsers.get(notificationFor.toString());
+    
+    // @ts-ignore
+    const io = global.io;
+  
+    if (targetSocketId) {
+      io.to(targetSocketId).emit(`socket:notification:${notificationFor}`, populateNotification);
+    }
+  
+    return notification;
   }
-
-  return notification;
+ 
 };
 
 const bidRequests = async (
@@ -104,86 +170,67 @@ const bidRequests = async (
   }
 ) => {
   const { page= 1, limit=10 } = data;
-  const user = await User.isValidUser(payload.id);
 
   const skipCount = (page - 1) * limit;
 
-  if( data.postID || data.postID != "" ){
+  if (!data.postID) {
+    return await Post.find({
+      createdBy: new mongoose.Types.ObjectId(payload.id)
+    }).populate("createdBy","name image location").select("-lat -lon").lean();
+  }
 
-    const post = await Post.findById( new mongoose.Types.ObjectId(data.postID) ).lean();
-    
-    if ( data.filter == "all" ) {
-      const requests = await Bid.find({ 
-        quizeGiver: user._id, 
-        service: post?._id,
-      })
-      .populate({
-        path: 'adventurer',
-        select: ' _id name image location',
-      })
-      .select("-service -updatedAt -createdAt -__v -createdBy -quizeGiver")
-      .skip(skipCount)
-      .limit(limit)
-      .lean();
-    
-      return requests;
-    } else if ( data.filter == "requested" ) {
-      const requests = await Bid.find({ 
-        quizeGiver: user._id, 
-        service: post?._id,
-        isAccepted_fromQuizeGiver: BID_STATUS.WATING
-      })
-      .populate({
-        path: 'adventurer',
-        select: ' _id name image location',
-      })
-      .select("-service -updatedAt -createdAt -__v -createdBy -quizeGiver")
-      .skip(skipCount)
-      .limit(limit)
-      .lean();
-    
-      return requests;
-    } else if ( data.filter == "accepted" ) {
-      const requests = await Bid.find({ 
-        quizeGiver: user._id, 
-        service: post?._id,
-        isAccepted_fromQuizeGiver: BID_STATUS.ACCEPTED
-      })
-      .populate({
-        path: 'adventurer',
-        select: ' _id name image location',
-      })
-      .select("-service -updatedAt -createdAt -__v -createdBy -quizeGiver")
-      .skip(skipCount)
-      .limit(limit)
-      .lean();
-    
-      return requests;
-    } else if ( data.filter == "completed" ) {
-      const requests = await Bid.find({ 
-        quizeGiver: user._id, 
-        service: post?._id,
-        isPaid: true
-      })
-      .populate({
-        path: 'adventurer',
-        select: '_id name image location',
-      })
-      .select("-service -updatedAt -createdAt -__v -createdBy -quizeGiver")
-      .skip(skipCount)
-      .limit(limit)
-      .lean();
-    
-      return requests;
-    }
+  const post = await Post.findById( new mongoose.Types.ObjectId(data.postID) ).lean();
+  if (!post) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "Your post was not found"
+    )
+  }
 
-  } else if ( !data.postID || data.postID == "") {
-    const posts = await Post.find({ createdBy: user._id })
-      .populate("createdBy","_id name location image")
-      .skip(skipCount)
-      .limit(limit)
-      .lean();
-    return posts
+  if (data.filter == "all") {
+    const bids = await Bid.find({
+      service: post._id
+    })
+    .populate("adventurer","name _id image location")
+    .select("adventurer isAccepted offer_ammount reason createdAt")
+    .skip( skipCount )
+    .limit(limit)
+  
+    return bids
+  } else if ( data.filter == "requested" ) {
+    const bids = await Bid.find({
+      service: post._id,
+      isAccepted: BID_STATUS.WATING
+    })
+    .populate("adventurer","name _id image location")
+    .select("adventurer isAccepted offer_ammount reason createdAt")
+    .skip( skipCount )
+    .limit(limit)
+  
+    return bids
+  } else if ( data.filter == "accepted" ) {
+    const bids = await Bid.find({
+      service: post._id,
+      isAccepted: BID_STATUS.ACCEPTED
+    })
+    .populate("adventurer","name _id image location")
+    .select("adventurer isAccepted offer_ammount reason createdAt")
+    .skip( skipCount )
+    .limit(limit)
+  
+    return bids
+  }else if ( data.filter == "completed" ) {
+    const bids = await Bid.find({
+      service: post._id,
+      isAccepted: BID_STATUS.WATING,
+      isPaid: true
+    })
+    .populate("adventurer","name _id image location")
+    .select("adventurer isAccepted offer_ammount reason createdAt")
+    .skip( skipCount )
+    .limit(limit)
+  
+    return bids
   }
 };
 
@@ -362,31 +409,20 @@ const intrigateWithBid = async (
       "BID not founded!"
     )
   };
-
-  if (payload.id == bid.adventurer) {
-      if (
-        bid.isAccepted_fromAdventurer == BID_STATUS.ACCEPTED || 
-        bid.isAccepted_fromAdventurer == BID_STATUS.DENY) {
-          throw new ApiError(
-            StatusCodes.NOT_ACCEPTABLE,
-            "BID was interrupted!"
-          )
-      }
-    } else {
-      if (
-        bid.isAccepted_fromQuizeGiver == BID_STATUS.ACCEPTED || 
-        bid.isAccepted_fromQuizeGiver == BID_STATUS.DENY) {
-          throw new ApiError(
-            StatusCodes.NOT_ACCEPTABLE,
-            "BID was interrupted!"
-          )
-      }
-    }
-
+  
+  if (bid.createdBy == user._id) {
+    throw new ApiError(
+      StatusCodes.NOT_ACCEPTABLE,
+      "You Can't accept you wone bid!"
+    )
+  }
+  
   if (action == true) {
 
+    const notificaitonFor = user._id == bid.quizeGiver? bid.adventurer : bid.quizeGiver
+
     const notification = await NotificationModel.create({
-      for: bid.adventurer,
+      for: notificaitonFor,
       from: payload.id,
       title: `your bit was accepted!`,
       discription: `${bid.reason}`
@@ -398,35 +434,26 @@ const intrigateWithBid = async (
         "Notification not created!"
       )
     }
-
     
-    const targetSocketId = socketHelper.connectedUsers.get(bid.createdBy.toString());
+    const targetSocketId = socketHelper.connectedUsers.get(notificaitonFor.toString());
+    bid.isAccepted = BID_STATUS.ACCEPTED;
     
     // @ts-ignore
     const io = global.io;
     if (targetSocketId) {
-      io.to(targetSocketId).emit(`socket:notification:${ bid.createdBy.toString() }`, notification);
+      io.to(targetSocketId).emit(`socket:notification:${notificaitonFor.toString() }`, notification);
     }
 
-    if (payload.id == bid.adventurer) {
-      bid.isAccepted_fromAdventurer = BID_STATUS.ACCEPTED;
-    } else {
-      bid.isAccepted_fromQuizeGiver = BID_STATUS.ACCEPTED;
-    }
-    
     await bid.save();
 
-    if ( bid.isAccepted_fromAdventurer == BID_STATUS.ACCEPTED && bid.isAccepted_fromQuizeGiver == BID_STATUS.ACCEPTED ) {
-      const tyaks = await Task.create({ 
+    if ( bid.isAccepted == BID_STATUS.ACCEPTED ) {
+      await Task.create({ 
         customer: bid.quizeGiver,
         provider: bid.adventurer,
         service: bid.service,
         bid: bid._id
       })
       
-      console.log(
-          tyaks
-      ) 
       return true
     }
 
@@ -448,10 +475,8 @@ const intrigateWithBid = async (
     }
 
     if (payload.id == bid.adventurer) {
-      bid.isAccepted_fromAdventurer = BID_STATUS.DENY;
-    } else {
-      bid.isAccepted_fromQuizeGiver = BID_STATUS.DENY;
-    }
+      bid.isAccepted = BID_STATUS.DENY;
+    } 
 
     await bid.save();
 

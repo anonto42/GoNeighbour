@@ -4,8 +4,10 @@ const defaultZodSchema = z.object({
   body: z.object({
     amount: z.number({required_error: "You must give the amount"}),
     reason: z.string({required_error: "you must give the reson for your bid"}),
-    postID: z.string({required_error: "You must give the id that you want to send the bid!"})
-  }),
+    postID: z.string().optional(),
+    bidID: z.string().optional(),
+    bidOn: z.enum([ "POST", "BID" ],{ invalid_type_error: "You must give the type of you bid like the POST or BID "})
+  }).strict()
 });
 
 const intrigateBidZodSchema = z.object({

@@ -8,6 +8,7 @@ const sendBid = catchAsync(async (
   req: Request, 
   res: Response
 ) => {
+  
   const user = req.user
   const { ...verifyData } = req.body;
   const result = await BidService.sendBid(user,verifyData);

@@ -23,12 +23,11 @@ const bidSchema = new Schema<BidI>({
         type: Schema.Types.ObjectId,
         ref: "post" 
     },
-    isAccepted_fromAdventurer:{
-        type: String,
-        enum: BID_STATUS,
-        default: BID_STATUS.WATING
+    lastBid:{
+        type: Schema.Types.ObjectId,
+        ref: "bid"
     },
-    isAccepted_fromQuizeGiver:{
+    isAccepted:{
         type: String,
         enum: BID_STATUS,
         default: BID_STATUS.WATING
