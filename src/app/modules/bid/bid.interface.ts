@@ -7,8 +7,9 @@ export interface BidI {
     service: Types.ObjectId;
     createdBy: Types.ObjectId;
     lastBid: Types.ObjectId;
-    isAccepted: BID_STATUS;
+    status: BID_STATUS;
     offer_ammount: number;
+    isInner: boolean;
     reason: string;
     isPaid: boolean;
     isCanceled: boolean;

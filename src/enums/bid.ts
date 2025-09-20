@@ -1,7 +1,8 @@
 
 
 export enum BID_STATUS {
-    ACCEPTED = "true",
-    DENY = "false",
-    WATING = "wating"
+    ACCEPTED = "accepted",
+    DENY = "denied",
+    WATING = "pending",
+    COMPLETED = "completed"
 }

@@ -46,6 +46,11 @@ router
 
 router
   .route("/pay")
+  .get(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    validateRequest( BidValidation.payBidZodSchema),
+    BidController.getBidData
+  )
   .post(
     auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
     validateRequest( BidValidation.payBidZodSchema),

@@ -27,7 +27,11 @@ const bidSchema = new Schema<BidI>({
         type: Schema.Types.ObjectId,
         ref: "bid"
     },
-    isAccepted:{
+    isInner: {
+        type: Boolean,
+        default: false
+    },
+    status:{
         type: String,
         enum: BID_STATUS,
         default: BID_STATUS.WATING

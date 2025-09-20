@@ -75,12 +75,12 @@ const intrigateWithBid = catchAsync(async (
 ) => {
   const user = req.user;
   const { action, bid_id } = req.body;
-  const result = await BidService.intrigateWithBid(user,bid_id,action);
+  const result = await BidService.intrigateWithBid(user,bid_id,action) as any;
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: "Bid intrigated!",
+    message: result.message? result.message : "Bid intrigated!",
     data: result,
   });
 });
@@ -97,6 +97,22 @@ const paytheBid = catchAsync(async (
     success: true,
     statusCode: StatusCodes.OK,
     message: "Payed to the adventurer!",
+    data: result,
+  });
+});
+
+const getBidData = catchAsync(async (
+  req: Request, 
+  res: Response
+) => {
+  const user = req.user;
+  const { bid_id } = req.body;
+  const result = await BidService.getPayDetails(user,bid_id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Bid Payment data!",
     data: result,
   });
 });
@@ -123,6 +139,7 @@ export const BidController = {
   intrigateWithBid,
   bidRequestesAsAdvengrar,
   paytheBid,
+  getBidData,
   cancelTask,
   deleteBid
 };
