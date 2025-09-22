@@ -43,9 +43,20 @@ const updateProfile = catchAsync(
       }
     }
     
-    const data = {
-      ...req.body,
-    };
+    const {
+      ...data
+    } = req.body;
+
+    if ( data.longitude || data.latitude ) {
+      data.geoLocation = {
+        type: "Point",
+        coordinates: [Number(data.latitude), Number(data.latitude)]
+      }
+    }
+
+    delete data.latitude
+    delete data.longitude
+
     const result = await UserService.updateProfileToDB(user, data);
 
     sendResponse(res, {

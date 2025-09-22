@@ -8,6 +8,10 @@ export type IUser = {
   totalPosts: Types.ObjectId[];
   user_name: string;
   role: USER_ROLES;
+  geoLocation: {
+    type: 'Point',
+    coordinates: number[],
+  },
   contact: string;
   email: string;
   faceVerifyed: boolean;

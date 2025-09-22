@@ -18,6 +18,8 @@ const updateUserZodSchema = z.object({
     location: z.string().optional(),
     image: z.string().optional(),
     gender: z.string().optional(),
+    latitude: z.coerce.number().optional(),
+    longitude: z.coerce.number().optional(),
     dob: z.string().optional(),
     skills: z.array( z.string()).optional()
   })

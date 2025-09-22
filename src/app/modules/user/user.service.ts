@@ -97,11 +97,8 @@ const updateProfileToDB = async (
   
     const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {
       new: true,
-    }).select("-password -verified -authentication").lean().exec();
+    }).select("-password -verified -authentication -complitedTasks -reviews -totalPosts -favorites -searchKeywords ").lean().exec();
 
-    console.log(updateDoc)
-  
-    // unlinkFile(payload.image!)
     return updateDoc;
     
   } catch (error: any) {
@@ -109,7 +106,7 @@ const updateProfileToDB = async (
       unlinkFile(payload.image as string)
     }
     throw new ApiError(
-      error.status,
+      500,
       error.message
     )
   };

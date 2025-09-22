@@ -50,7 +50,7 @@ const getChatById = async ( id: string ) => {
   }
   
   const chat = await ChatRoom.findById(id)
-    .populate("participants", "email name image");
+    .populate("participants", "email name image geoLocation");
   
   return chat;
 };

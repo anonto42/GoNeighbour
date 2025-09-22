@@ -14,6 +14,10 @@ const userSchema = new Schema<IUser, UserModal>(
     user_name:{
       type: String
     },
+    geoLocation: {
+      type: { type: String, enum: ['Point'], default: 'Point' },
+      coordinates: { type: [Number], default: [0, 0]},
+    },
     totalSpent: {
       type: Number,
       default: 0
@@ -84,7 +88,7 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     image: {
       type: String,
-      default: 'https://i.ibb.co/z5YHLV9/profile.png',
+      default: '',
     },
     searchKeywords: {
       type: [String],
