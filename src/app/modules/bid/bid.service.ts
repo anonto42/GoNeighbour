@@ -106,8 +106,7 @@ const sendBid = async (
     }
 
     existingBId.status = BID_STATUS.DENY;
-    await existingBId.save();
-
+    
     const newBid = await Bid.create({
       adventurer: existingBId.adventurer,
       createdBy: userObjId,
@@ -115,10 +114,12 @@ const sendBid = async (
       reason: data.reason,
       offer_ammount: data.amount,
       quizeGiver: existingBId.quizeGiver,
-      lastBid: existingBId._id,
       isInner: true
     })
-
+    
+    existingBId.lastBid = newBid._id;
+    await existingBId.save();
+    
     const post = await Post.findById(newBid.service).lean().exec();
     if (!post) {
       throw new ApiError(
@@ -172,7 +173,6 @@ const bidRequests = async (
   }
 ) => {
   // const { page= 1, limit=60 } = data;
-
   // const skipCount = (page - 1) * limit;
 
   if (!data.postID) {
@@ -307,18 +307,14 @@ const bidRequesteAsAdvengerer = async (
 ) => {
   const user = await User.isValidUser(payload.id);
 
-  const { page= 1, limit=10 } = data;
+  // const { page= 1, limit=10 } = data;
 
-  const skipCount = (page - 1) * limit;
+  // const skipCount = (page - 1) * limit;
 
     if ( data.filter == "all" ) {
       const requests = await Bid.find({ 
         adventurer: user._id, 
       })
-      // .populate({
-      //   path: 'adventurer',
-      //   select: ' _id name image location',
-      // })
       .populate({
         path: 'service',
         select: ' _id title amount images description createdAt location address',
@@ -327,13 +323,17 @@ const bidRequesteAsAdvengerer = async (
         path: 'createdBy',
         select: '_id name image location',
       })
-      // .populate({
-      //   path: 'quizeGiver',
-      //   select: '_id name image location',
-      // })
+      .populate({
+        path: "lastBid",
+        select: "adventurer status offer_ammount reason createdAt lastBid",
+        populate:{
+          path: "adventurer",
+          select: "name _id image location"
+        }
+      })
       .select("-updatedAt -createdAt -__v -createdBy -quizeGiver -adventurer")
-      .skip(skipCount)
-      .limit(limit)
+      // .skip(skipCount)
+      // .limit(limit)
       .lean();
     
       return requests;
@@ -351,9 +351,17 @@ const bidRequesteAsAdvengerer = async (
         path: 'createdBy',
         select: '_id name image location',
       })
+      .populate({
+        path: "lastBid",
+        select: "adventurer status offer_ammount reason createdAt lastBid",
+        populate:{
+          path: "adventurer",
+          select: "name _id image location"
+        }
+      })
       .select("-updatedAt -createdAt -__v -createdBy -quizeGiver -adventurer")
-      .skip(skipCount)
-      .limit(limit)
+      // .skip(skipCount)
+      // .limit(limit)
       .lean();
     
       return requests;
@@ -371,9 +379,17 @@ const bidRequesteAsAdvengerer = async (
         path: 'createdBy',
         select: '_id name image location',
       })
+      .populate({
+        path: "lastBid",
+        select: "adventurer status offer_ammount reason createdAt lastBid",
+        populate:{
+          path: "adventurer",
+          select: "name _id image location"
+        }
+      })
       .select("-updatedAt -createdAt -__v -createdBy -quizeGiver -adventurer")
-      .skip(skipCount)
-      .limit(limit)
+      // .skip(skipCount)
+      // .limit(limit)
       .lean();
     
       return requests;
@@ -391,9 +407,17 @@ const bidRequesteAsAdvengerer = async (
         path: 'createdBy',
         select: '_id name image location',
       })
+      .populate({
+        path: "lastBid",
+        select: "adventurer status offer_ammount reason createdAt lastBid",
+        populate:{
+          path: "adventurer",
+          select: "name _id image location"
+        }
+      })
       .select("-updatedAt -createdAt -__v -createdBy -quizeGiver -adventurer")
-      .skip(skipCount)
-      .limit(limit)
+      // .skip(skipCount)
+      // .limit(limit)
       .lean();
     
       return requests;

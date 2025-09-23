@@ -5,8 +5,6 @@ import validateRequest from "../../middlewares/validateRequest";
 import { PostValidation } from "./post.validation";
 import fileUploadHandler from "../../middlewares/fileUploadHandler";
 import { PostController } from "./post.controller";
-import { Post } from "./post.model";
-
 
 const router = Router();
 
@@ -74,6 +72,20 @@ router
     .delete(
         auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
         PostController.removeFavorites
+    )
+
+router
+    .route("/delete/:id")
+    .delete(
+        auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+        PostController.skipPostID
+    )
+
+router
+    .route("/map")
+    .get(
+        auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
+        PostController.getPostWithCodinats
     )
 
 export const PostRouter = router;

@@ -1,7 +1,6 @@
 import { model, Schema } from "mongoose";
 import { postInterface } from "./post.interface";
 
-
 const postSchema = new Schema<postInterface>({ 
     title: {
         type: String,
@@ -34,6 +33,10 @@ const postSchema = new Schema<postInterface>({
         type: String,
       }
     ],
+    skipFrom:{
+      type: [Schema.Types.ObjectId],
+      ref: "user"
+    },
     lat: {
       type: Number,
       required: true,

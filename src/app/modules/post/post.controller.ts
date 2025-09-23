@@ -176,7 +176,40 @@ const getWonePosts = catchAsync(
   }
 );
 
+const getPostWithCodinats = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+
+    const id = req.user.id;
+    
+    const result = await PostService.postDataWithCordinats( id );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully get posts!',
+      data: result,
+    });
+  }
+);
+
+const skipPostID = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+
+    const id = req.user.id;
+    const postId = req.params.id;
+
+    const result = await PostService.skipFrom( id, postId );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Successfully skip posts!',
+      data: result,
+    });
+  }
+);
+
 export const PostController = { 
-  createPost,aPost,updateAPost,lastPosts,getWonePosts,
-  favorites,addFavorites,removeFavorites,deletePost
+  createPost,aPost,updateAPost,lastPosts,getWonePosts, skipPostID,
+  favorites,addFavorites,removeFavorites,deletePost,getPostWithCodinats
 };

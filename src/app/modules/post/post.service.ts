@@ -1,15 +1,16 @@
 import { JwtPayload } from "jsonwebtoken";
 import ApiError from "../../../errors/ApiError";
-import { postT, updatePostT } from "../../../types/post";
+import { updatePostT } from "../../../types/post";
 import { User } from "../user/user.model";
 import unlinkFile from "../../../shared/unlinkFile";
 import { Post } from "./post.model";
 import { StatusCodes } from "http-status-codes";
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
+import { postInterface } from "./post.interface";
 
 const createPost = async (
     payload: JwtPayload,
-    data: postT
+    data: postInterface
 ) => {
     try {
 
@@ -34,15 +35,16 @@ const createPost = async (
         
         data.createdBy = new Types.ObjectId( user._id )
 
-        // const isPostExist = await Post.findOne({title: data.title});
-        // if (isPostExist) {
-        //     throw new ApiError(
-        //         StatusCodes.BAD_REQUEST,
-        //         `Already post exist on the named: ${data.title}`
-        //     )
-        // }
-
+        //@ts-ignore
         data.address = data.location
+
+        data.location = {
+            type: "Point",
+            coordinates: [//@ts-ignore
+                data.lon,
+                data.lat
+            ],
+        }
 
         const createdPost = await Post.create(data);
 
@@ -297,9 +299,33 @@ const removeFromFavorite = async (
     return false
 };
 
+const postDataWithCordinats = async ( id: string ) => await Post.find({ createdBy: { $ne: new mongoose.Types.ObjectId( id )}}).sort({ createdAt: -1 }).select("location title description amount").lean();
+
+const skipFrom = async (user: string, id: string) => {
+  const post = await Post.findById(new mongoose.Types.ObjectId(id));
+  if (!post) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "The post was not available!"
+    );
+  }
+
+  const userId = new mongoose.Types.ObjectId(user);
+
+  // check if user already in skipFrom
+  if (!post.skipFrom.some(existing => existing.equals(userId))) {
+    post.skipFrom.push(userId);
+    await post.save();
+  }
+
+  return post.skipFrom;
+};
+
 export const PostService = {
     createPost,
+    postDataWithCordinats,
     aPost,
+    skipFrom,
     updatedPost,
     removeFromFavorite,
     lastPosts,
@@ -307,4 +333,4 @@ export const PostService = {
     getFavorite,
     woneCreatedPosts,
     deletePost
-}
+};

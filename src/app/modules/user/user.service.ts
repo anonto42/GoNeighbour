@@ -197,7 +197,11 @@ const home_data = async (
 
   const skipCount = (page - 1) * limit;
 
-  const posts = await Post.find({ createdBy: { $ne: user._id }})
+  const posts = await Post.find({ 
+      skipFrom: { $ne: { $in: user._id } },
+      createdBy: { $ne: user._id 
+    
+    }})
     .populate("createdBy", "name image")
     .skip(skipCount)
     .limit(limit)
@@ -562,6 +566,13 @@ const getPosts = async (
     limit = 10,
   } = options;
 
+  const user = await User.findById(payload.id).select("favorites");
+  if (!user) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "User not found!"
+    )
+  }
   const skip = (page - 1) * limit;
   const query: any = { createdBy: { $ne: payload.id } };
 
@@ -570,7 +581,9 @@ const getPosts = async (
     const escapedKeyword = sanitizedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     query.$or = [
-      { title: { $regex: escapedKeyword, $options: 'i' } }
+      { title: { $regex: escapedKeyword, $options: 'i' },
+        skipFrom: { $nin: [user._id] } 
+      },
     ];
   }
 
@@ -590,13 +603,16 @@ const getPosts = async (
     };
   }
 
-  let posts = await Post.find(query)
+  let posts = await Post.find({
+      ...query,
+      skipFrom: { $nin: [user._id] },
+    })
     .populate("createdBy", "name image")
     .skip(skip)
     .limit(limit)
+    .select("-skipFrom")
     .lean();
 
-  const user = await User.findById(payload.id).select("favorites");
   const favoriteSet = new Set(user?.favorites.map(fav => fav.toString()));
   posts = posts.map(post => ({
     ...post,
