@@ -29,9 +29,16 @@ const cancelBidZodSchema = z.object({
   }),
 });
 
+const agreeWithPostZodSchema = z.object({
+  params: z.object({
+    id: z.string({required_error: "You must give the post id to agree with the bid!"})
+  }).strict()
+});
+
 export const BidValidation = {
   defaultZodSchema,
   intrigateBidZodSchema,
   payBidZodSchema,
+  agreeWithPostZodSchema,
   cancelBidZodSchema
 };

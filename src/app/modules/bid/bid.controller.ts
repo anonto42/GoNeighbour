@@ -133,6 +133,22 @@ const cancelTask = catchAsync(async (
   });
 });
 
+const aggryWithTask = catchAsync(async (
+  req: Request, 
+  res: Response
+) => {
+  const user = req.user;
+  const id = req.params.id;
+  const result = await BidService.aggryWithTask(user,id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Successfully agree with the post details",
+    data: result,
+  });
+});
+
 export const BidController = {
   sendBid,
   bidRequestes,
@@ -140,6 +156,7 @@ export const BidController = {
   bidRequestesAsAdvengrar,
   paytheBid,
   getBidData,
+  aggryWithTask,
   cancelTask,
   deleteBid
 };

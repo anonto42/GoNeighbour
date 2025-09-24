@@ -37,14 +37,6 @@ const postSchema = new Schema<postInterface>({
       type: [Schema.Types.ObjectId],
       ref: "user"
     },
-    lat: {
-      type: Number,
-      required: true,
-    },
-    lot: {
-      type: Number,
-      required: true,
-    },
     address: {
       type: String,
       default: ""
@@ -67,6 +59,6 @@ postSchema.pre('save', function (next) {
   next();
 });
 
-postSchema.index({ "location": "2dsphere" });
+postSchema.index({ location: "2dsphere" });
 
 export const Post = model<postInterface>('post', postSchema);

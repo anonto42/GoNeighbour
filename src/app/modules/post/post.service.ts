@@ -38,15 +38,23 @@ const createPost = async (
         //@ts-ignore
         data.address = data.location
 
-        data.location = {
-            type: "Point",
-            coordinates: [//@ts-ignore
-                data.lon,
-                data.lat
-            ],
+        const lon = Number(data.lot);
+        const lat = Number(data.lat);
+
+        if (isNaN(lon) || isNaN(lat) || lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid latitude or longitude");
         }
 
-        const createdPost = await Post.create(data);
+        const postPayload = {
+            ...data,
+            address: data.location, 
+            location: {
+                type: "Point",
+                coordinates: [lon, lat],
+            },
+        };
+
+        const createdPost = await Post.create(postPayload);
 
         user.totalPosts.push(createdPost._id);
         await user.save();
@@ -92,7 +100,7 @@ const aPost = async (
     const isPostExist = await Post
                                 .findById(postId)
                                 .populate("createdBy","reviews image email name _id")
-                                .select("-lat -lot -__v -location")
+                                .select("-lat -lot -__v")
     if (!isPostExist) {
         throw new ApiError(
             StatusCodes.NOT_FOUND,
@@ -107,69 +115,66 @@ const updatedPost = async (payload: JwtPayload, data: updatePostT) => {
   await User.isValidUser(payload.id);
 
   const isPostExist = await Post.findById(data.postId);
-  if (!isPostExist) throw new ApiError(StatusCodes.BAD_REQUEST, "Post not found");
+  if (!isPostExist) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Post not found");
+  }
 
-//   function stringToArray(str: string): string[] {
-//     if (!str) return [];
-//     let cleaned = str.trim().replace(/,\s*]$/, "]");
-//     try { return JSON.parse(cleaned); } 
-//     catch { 
-//       const matches = cleaned.match(/"([^"]+)"/g);
-//       return matches ? matches.map(s => s.replace(/"/g, "")) : [];
-//     }
-//   }
+  // --- Handle oldImages properly ---
+  if (typeof data.oldImages === "string") {
+    try {
+      data.oldImages = JSON.parse(data.oldImages);
+    } catch (e) {
+      data.oldImages = [data.oldImages];
+    }
+  }
 
-    if(
-        typeof (data.oldImages) === "string"
-    ){
-        data.oldImages = [data.oldImages]
-    } else {
-        data.oldImages = data.oldImages
+  const oldImages: string[] = Array.isArray(data.oldImages) ? data.oldImages : [];
+  const newImages: string[] = Array.isArray(data.images) ? data.images : [];
+
+  if (oldImages.length || newImages.length) {
+    isPostExist.images = [...oldImages, ...newImages];
+  }
+
+  if (data.title) isPostExist.title = data.title;
+  if (data.description) isPostExist.description = data.description;
+  if (data.amount) isPostExist.amount = Number(data.amount);
+
+  if (data.location && typeof data.location === "string") {
+    isPostExist.address = data.location;
+  }
+
+  if (data.lat && data.lot) {
+    const lat = Number(data.lat);
+    const lon = Number(data.lot);
+
+    if (isNaN(lat) || isNaN(lon) || lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid latitude or longitude");
     }
 
+    isPostExist.location = {
+      type: "Point",
+      coordinates: [lon, lat], // correct order
+    };
+  }
 
-    if (data.images && data.oldImages) {
-            if (data.images.length > 0) {
-                if (data.oldImages.length > 0) {
-                isPostExist.images = [
-                    ...data.oldImages,
-                    ...data.images
-                ]
-            }
-        }
-    } else if (data.oldImages) {
-        if (data.oldImages.length > 0) {
-            isPostExist.images = [
-                ...data.oldImages
-                ]
-            }
-        }
+  if (data.deadline) {
+    // @ts-ignore
+    isPostExist.deadline = parseNullableDate(data.deadline);
+  }
+  if (data.work_time) {
+    // @ts-ignore
+    isPostExist.work_time = parseNullableDate(data.work_time);
+  }
 
-    if (data.title) isPostExist.title = data.title;
-    if (data.amount) isPostExist.amount = data.amount;
-
-    if (data.location && typeof data.location === "object") {
-        isPostExist.location = data.location;
-    }
-
-    //@ts-ignore
-    if (data.deadline) isPostExist.deadline = parseNullableDate(data.deadline);
-    //@ts-ignore
-    if (data.work_time) isPostExist.work_time = parseNullableDate(data.work_time);
-    //@ts-ignore
-    if (data.location) isPostExist.address = data.location;
-    if (data.lat) isPostExist.lat = data.lat;
-    if (data.lot) isPostExist.lot = data.lot;
-    if (data.description) isPostExist.description = data.description;
-
-    await isPostExist.save();
+  await isPostExist.save();
+  return isPostExist;
 };
 
 function parseNullableDate(value: string | null | undefined) {
   if (!value || value === "null") return undefined;
   const d = new Date(value);
   return isNaN(d.getTime()) ? undefined : d;
-}
+};
 
 const lastPosts = async (
     user: JwtPayload,

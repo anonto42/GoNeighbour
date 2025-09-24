@@ -47,15 +47,15 @@ const updateProfile = catchAsync(
       ...data
     } = req.body;
 
-    if ( data.longitude || data.latitude ) {
+    if ( data.lng || data.lat ) {
       data.geoLocation = {
         type: "Point",
-        coordinates: [Number(data.latitude), Number(data.latitude)]
+        coordinates: [Number(data.lng), Number(data.lat)]
       }
     }
 
-    delete data.latitude
-    delete data.longitude
+    delete data.lng
+    delete data.lat
 
     const result = await UserService.updateProfileToDB(user, data);
 

@@ -94,7 +94,7 @@ const updateProfileToDB = async (
     if (payload.image && isExistUser.image) {
       unlinkFile(isExistUser.image);
     };
-  
+
     const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {
       new: true,
     }).select("-password -verified -authentication -complitedTasks -reviews -totalPosts -favorites -searchKeywords ").lean().exec();

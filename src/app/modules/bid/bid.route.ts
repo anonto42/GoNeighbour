@@ -65,4 +65,12 @@ router
     BidController.cancelTask
   )
 
+router
+  .route("/agree/:id")
+  .post(
+    auth( USER_ROLES.ADMIN, USER_ROLES.USER ),
+    validateRequest( BidValidation.agreeWithPostZodSchema),
+    BidController.aggryWithTask
+  )
+
 export const BidRoutes = router;

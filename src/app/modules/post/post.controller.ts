@@ -48,13 +48,9 @@ const aPost = catchAsync(
 const updateAPost = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { ...userData } = req.body;
-    console.log("Controller updateAPost:", req.body);
-    console.log("Controller updateAPost:", req.files);
+    
     const user = req.user;
-    // if (req.files) {
-      const images = getMultipleFilesPath(req.files,"image")
-    //   req.body.images = images
-    // }
+    const images = getMultipleFilesPath(req.files,"image")
 
     const data = {
       images,

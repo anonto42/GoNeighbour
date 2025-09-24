@@ -865,11 +865,80 @@ const removeBid = async (
 
   await Bid.findByIdAndDelete(find._id);
   return true
+};
+
+const aggryWithTask = async (
+  payload: JwtPayload,
+  id: string,
+) => {
+  const user = await User.findById( new mongoose.Types.ObjectId( payload.id ));
+  if (!user) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "User not found!"
+    )
+  }
+
+  const post = await Post.findById( new mongoose.Types.ObjectId( id ) );
+  if (!post) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "Post not founded!"
+    )
+  }
+
+  const bid = await Bid.create({
+    adventurer: user._id,
+    isInner: false,
+    offer_ammount: post.amount,
+    service: post._id,
+    status: BID_STATUS.ACCEPTED,
+    reason: "Agree with post offer",
+    createdBy: user._id
+  });
+  if (!bid) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "Bid not created!"
+    )
+  }
+
+  const notification = await NotificationModel.create({
+    for: post.createdBy,
+    from: user._id,
+    title: `A Adventurer agree with your post contract!`,
+    discription: post.description
+  });
+  if (!notification) {
+    throw new ApiError(
+      StatusCodes.NOT_ACCEPTABLE,
+      "Notification not created!"
+    )
+  }
+  
+  const populateNotification = await NotificationModel
+  .findById(notification._id)
+  .populate("from", "name email image")
+  .populate("for", "name email image")
+  .lean();
+  
+  const targetSocketId = socketHelper.connectedUsers.get(notification.for.toString());
+    
+  // @ts-ignore
+  const io = global.io;
+  
+  if (targetSocketId) {
+    io.to(targetSocketId).emit(`socket:notification:${notification.for.toString()}`, populateNotification);
+  }
+  
+  return notification;
+  
 }
 
 export const BidService = {
   sendBid,
   removeBid,
+  aggryWithTask,
   getPayDetails,
   paytheBid,
   cancelTask,

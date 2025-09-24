@@ -18,12 +18,6 @@ import { ResetToken } from '../resetToken/resetToken.model';
 import { User } from '../user/user.model';
 import { STATUS } from '../../../enums/user';
 import ms, { StringValue } from "ms";
-// import * as faceapi from 'face-api.js';
-// import { Canvas, Image, ImageData,loadImage } from 'canvas';
-// import path from 'path';
-// import fs from 'fs';
-// import Tesseract from 'tesseract.js' 
-// import sharp from 'sharp'
 import unlinkFile from '../../../shared/unlinkFile';
 
 //login
@@ -80,7 +74,7 @@ const loginUserFromDB = async (payload: ILoginData) => {
     expireAt: expireAt
   })
   
-  return { accessToken: createToken, refreshToken, userId: isExistUser._id };
+  return { accessToken: createToken, refreshToken, userId: isExistUser._id, name: isExistUser.name };
 };
 
 // refresh access token
