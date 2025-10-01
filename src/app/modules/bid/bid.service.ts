@@ -302,7 +302,7 @@ const bidRequesteAsAdvengerer = async (
   data: {
     page: number,
     limit: number
-    filter: "all" | "requested" | "accepted" | "completed"
+    filter: "all" | "requested" | "accepted" | "completed" | "canceled"
   }
 ) => {
   const user = await User.isValidUser(payload.id);
@@ -398,6 +398,34 @@ const bidRequesteAsAdvengerer = async (
         adventurer: user._id, 
         isInner: false,
         isPaid: true
+      })
+      .populate({
+        path: 'service',
+        select: ' _id title amount images description createdAt location address',
+      })
+      .populate({
+        path: 'createdBy',
+        select: '_id name image location',
+      })
+      .populate({
+        path: "lastBid",
+        select: "adventurer status offer_ammount reason createdAt lastBid",
+        populate:{
+          path: "adventurer",
+          select: "name _id image location"
+        }
+      })
+      .select("-updatedAt -createdAt -__v -createdBy -quizeGiver -adventurer")
+      // .skip(skipCount)
+      // .limit(limit)
+      .lean();
+    
+      return requests;
+    } else if ( data.filter == "canceled" ) {
+      const requests = await Bid.find({ 
+        adventurer: user._id, 
+        isInner: false,
+        status: BID_STATUS.DENY
       })
       .populate({
         path: 'service',
@@ -755,7 +783,7 @@ const getPayDetails = async (
       path: "service",
       select: "title amount createdAt description address",
     })
-    .populate("createdBy", "name email image location reviews")
+    .populate("createdBy", "name email image location reviews contact")
     .lean();
 
   if (!bid) {
@@ -772,18 +800,19 @@ const getPayDetails = async (
     createdBy.avgRating = 0;
   }
 
+  const post = await Post.findById( bid.service );
+
   delete createdBy.reviews;
 
-  const data = {
+ return {
     createdBy,
     service: bid.service,
     subTotal: bid.offer_ammount,
     bidId: bid._id,
     appFee: bid.offer_ammount * 0.10,
     total: bid.offer_ammount + bid.offer_ammount * 0.10,
+    location: post?.location
   };
-
-  return data;
 };
 
 const checkBidCancellationStatus = async (user: any) => {
