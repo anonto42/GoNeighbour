@@ -23,5 +23,5 @@ export type updatePostT = {
     oldImages: any,
     location: any,
     lat: number,
-    lot: number
+    lng: number
 }

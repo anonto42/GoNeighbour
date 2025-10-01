@@ -36,11 +36,6 @@ router
     )
     .patch(
         auth( USER_ROLES.USER, USER_ROLES.ADMIN ),
-        ( req,res,next) => {
-            console.log("req.body ____+++++>>>>", req.body)
-            console.log("req.file ____+++++>>>>", req.files)
-            next()
-        },
         fileUploadHandler(),
         validateRequest( PostValidation.updatePostZodSchema ),
         PostController.updateAPost

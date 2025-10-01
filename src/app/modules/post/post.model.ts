@@ -50,10 +50,10 @@ const postSchema = new Schema<postInterface>({
 })
 
 postSchema.pre('save', function (next) {
-  if (this.lat && this.lot) {
+  if (this.lat && this.lng) {
     this.location = {
       type: 'Point',
-      coordinates: [this.lat, this.lot],
+      coordinates: [this.lat, this.lng],
     };
   }
   next();

@@ -38,7 +38,7 @@ const createPost = async (
         //@ts-ignore
         data.address = data.location
 
-        const lon = Number(data.lot);
+        const lon = Number(data.lng);
         const lat = Number(data.lat);
 
         if (isNaN(lon) || isNaN(lat) || lon < -180 || lon > 180 || lat < -90 || lat > 90) {
@@ -143,9 +143,9 @@ const updatedPost = async (payload: JwtPayload, data: updatePostT) => {
     isPostExist.address = data.location;
   }
 
-  if (data.lat && data.lot) {
+  if (data.lat && data.lng) {
     const lat = Number(data.lat);
-    const lon = Number(data.lot);
+    const lon = Number(data.lng);
 
     if (isNaN(lat) || isNaN(lon) || lon < -180 || lon > 180 || lat < -90 || lat > 90) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid latitude or longitude");

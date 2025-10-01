@@ -15,5 +15,5 @@ export type postInterface = {
             coordinates: number[]
         } ,
     lat: number,
-    lot: number
+    lng: number
 }
