@@ -304,7 +304,13 @@ const removeFromFavorite = async (
     return false
 };
 
-const postDataWithCordinats = async ( id: string ) => await Post.find({ createdBy: { $ne: new mongoose.Types.ObjectId( id )}}).sort({ createdAt: -1 }).select("location title description amount").lean();
+const postDataWithCordinats = async ( id: string ) => 
+  await Post
+    .find({ createdBy: { $ne: new mongoose.Types.ObjectId( id )}})
+    .sort({ createdAt: -1 })
+    .populate("createdBy", "geoLocation name image")
+    .select("-lat -lot")
+.lean();
 
 const skipFrom = async (user: string, id: string) => {
   const post = await Post.findById(new mongoose.Types.ObjectId(id));

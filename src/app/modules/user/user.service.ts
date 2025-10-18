@@ -21,6 +21,7 @@ import mongoose, { Types } from 'mongoose';
 import { startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears  } from 'date-fns';
 import { Task } from '../task/task.model';
 import { Reating } from '../rating/rating.model';
+import { calculateDistanceInKm } from '../../../helpers/destanceCountHelper';
 
 const createUserToDB = async (payload: Partial<register>): Promise<any> => {
   await User.isExistUserByEmail(payload.email!);
@@ -112,6 +113,7 @@ const updateProfileToDB = async (
   };
 };
 
+// Also this will remove
 const searchData = async (
   payload: JwtPayload,
   keyword: string, 
@@ -173,6 +175,72 @@ const searchData = async (
     }
 
     return posts;
+};
+
+const getPostWithDistance = async ({
+  payload,
+  data,
+}: {
+  payload: JwtPayload;
+  data: {
+    maxDistance: number;
+    maxPrice: number;
+    minPrice: number;
+    userLat: number;
+    userLng: number;
+    search: string;
+    page?: number;
+    limit?: number;
+  };
+}) => {
+  const { userLat, userLng, maxDistance, minPrice, maxPrice, page = 1, limit = 10, search } = data;
+  const skip = (page - 1) * limit;
+
+  const latN = Number(userLat);
+  const lngN = Number(userLng);
+  const distN = Number(maxDistance);
+  const hasCoords = Number.isFinite(latN) && Number.isFinite(lngN);
+  const hasDist = Number.isFinite(distN) && distN >= 1;
+
+  const sanitizedKeyword = search.trim();
+  const queryFilters: any = {};
+
+  if (sanitizedKeyword) {
+    queryFilters.$or = [
+      { title: { $regex: sanitizedKeyword, $options: "i" } }, 
+      { description: { $regex: sanitizedKeyword, $options: "i" } }
+    ];
+  }
+
+  queryFilters.amount = { $gte: minPrice, $lte: maxPrice };
+
+  // Fetch posts based on filters
+  const posts = await Post.find(queryFilters)
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+    
+  const enrichedPosts = await Promise.all(
+    posts.map(async (post: any) => {
+      const pLat = post?.location?.coordinates?.[1];
+      const pLng = post?.location?.coordinates?.[0];
+      const dKm = hasCoords ? calculateDistanceInKm(latN, lngN, pLat, pLng) : undefined;
+
+      return {
+        ...post,
+        isValid: new Date(post.deadline).getTime() > Date.now(), 
+        distance: dKm,
+      };
+    })
+  );
+
+  // If distance filter is set, filter the posts based on distance
+  if (hasCoords && hasDist) {
+    return enrichedPosts.filter(p => p.distance <= ( distN ?? 30000 ));
+  }
+
+  return enrichedPosts;
 };
 
 const getTopSearchedKeywords = async (limit: number = 10) => {
@@ -286,10 +354,8 @@ const wone_created_suports = async (
   return await Suport.find({user: user._id}).populate("user","name email image").skip(skipCount).limit(option.limit)
 }
 
-const filterdata = async (
-  user: JwtPayload,
-  data: filterType
-) => {
+ /// This will be remove
+const filterdata = async ( user: JwtPayload, data: filterType ) => {
   const { maxDistance, maxPrice, minPrice, userLat, userLng } = data;
   const userFromDB = await User.isValidUser(user.id);
 
@@ -312,14 +378,7 @@ const filterdata = async (
   return posts;
 }
 
-const getNotifications = async (
-  user: JwtPayload,
-  option: {
-    limit: number;
-    page: number;
-    date: "weekly" | "monthly" | "yearly" | "Select";
-  }
-) => {
+const getNotifications = async ( user: JwtPayload, option: { limit: number; page: number; date: "weekly" | "monthly" | "yearly" | "Select"; } ) => {
   const userFromDB = await User.isValidUser(user.id);
 
   const skipCount = (option.page - 1) * option.limit;
@@ -652,5 +711,6 @@ export const UserService = {
   giveReview,
   getAProfile,
   deleteUser,
-  getUnreadCount
+  getUnreadCount,
+  getPostWithDistance
 };

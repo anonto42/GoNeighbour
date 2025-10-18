@@ -117,20 +117,20 @@ const homeData = catchAsync(async (req: Request, res: Response) => {
 
 const filterData = catchAsync(async (req: Request, res: Response) => {
   
-  const user = req.user;
-  const { ...data } = req.body;
+  // const user = req.user;
+  // const { ...data } = req.body;
 
-  let result;
+  let result = await UserService.getPostWithDistance(req.body);
 
-  if (data.uni && data.uni == 'true') {
-    result = await Post.find();
-  }else{
-      if (data.search) {
-      result = await UserService.searchData(user, data.search, data.page, data.limit);
-    }if (!data.search) {
-      result = await UserService.filterdata(user,data);
-    } 
-  }
+  // if (data.uni && data.uni == 'true') {
+  //   result = await Post.find();
+  // }else{
+  //     if (data.search) {
+  //     result = await UserService.searchData(user, data.search, data.page, data.limit);
+  //   }if (!data.search) {
+  //     result = await UserService.filterdata(user,data);
+  //   } 
+  // }
   
 
   sendResponse(res, {
